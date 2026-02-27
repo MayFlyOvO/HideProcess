@@ -157,6 +157,22 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private async void CheckUpdatesButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (Owner is MainWindow mainWindow)
+        {
+            await mainWindow.CheckForUpdatesFromSettingsAsync(this);
+            return;
+        }
+
+        System.Windows.MessageBox.Show(
+            this,
+            Localizer.T("Update.CheckFailed", _previewLanguage).Replace("{0}", "Main window not available."),
+            Localizer.T("Update.CheckFailedTitle", _previewLanguage),
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+    }
+
     private void LanguageComboBox_OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (LanguageComboBox.SelectedItem is not LanguageOption option)
@@ -213,6 +229,7 @@ public partial class SettingsWindow : Window
         LanguageLabel.Text = Localizer.T("Settings.Language", _previewLanguage);
         ImportButtonTextBlock.Text = Localizer.T("Settings.Import", _previewLanguage);
         ExportButtonTextBlock.Text = Localizer.T("Settings.Export", _previewLanguage);
+        CheckUpdatesButtonTextBlock.Text = Localizer.T("Settings.CheckUpdatesNow", _previewLanguage);
         CancelButtonTextBlock.Text = Localizer.T("Settings.Cancel", _previewLanguage);
         SaveButtonTextBlock.Text = Localizer.T("Settings.Save", _previewLanguage);
         UpdateHotkeyPreview();

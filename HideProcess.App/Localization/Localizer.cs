@@ -31,26 +31,27 @@ public static class Localizer
             ["Main.CollapseLogs"] = "折叠",
             ["Main.ExpandLogs"] = "展开",
             ["Main.LogCleared"] = "日志已清空。",
-            ["Main.PreviousUncleanExit"] = "检测到上次未正常退出，请确认窗口状态。",
+            ["Main.PreviousUncleanExit"] = "检测到上次异常退出，请确认目标窗口状态。",
             ["Main.StatusReady"] = "全局热键已启用。",
-            ["Main.StatusRefreshed"] = "运行中窗口列表已刷新。",
+            ["Main.StatusRefreshed"] = "运行中窗口已刷新。",
             ["Main.StatusDuplicate"] = "目标已存在。",
             ["Main.StatusAdded"] = "已添加目标: {0}",
             ["Main.StatusRemoved"] = "已移除目标: {0}",
-            ["Main.StatusNoTargets"] = "尚未配置可操作目标。",
+            ["Main.StatusNoTargets"] = "当前没有可操作目标。",
             ["Main.StatusHidden"] = "已隐藏 {0} 个窗口。",
             ["Main.StatusNoMatched"] = "未找到可隐藏的匹配窗口。",
             ["Main.StatusShown"] = "已恢复 {0} 个窗口。",
-            ["Main.StatusNoHidden"] = "没有可恢复的隐藏窗口。",
+            ["Main.StatusNoHidden"] = "当前没有已隐藏窗口。",
             ["Main.StatusSaveFailed"] = "保存失败: {0}",
             ["Main.StatusSettingsApplied"] = "设置已应用。",
             ["Main.InitErrorTitle"] = "错误",
             ["Main.InitErrorText"] = "初始化失败: {0}",
             ["Main.HintTitle"] = "提示",
-            ["Main.SelectRunningTarget"] = "请先选择一个运行中的窗口。",
-            ["Tray.ShowMain"] = "显示主界面",
-            ["Tray.HideTargets"] = "隐藏目标窗口",
-            ["Tray.ShowTargets"] = "恢复目标窗口",
+            ["Main.SelectRunningTarget"] = "请先选择一个运行中窗口。",
+            ["Tray.ShowMain"] = "显示主窗口",
+            ["Tray.HideTargets"] = "隐藏目标",
+            ["Tray.ShowTargets"] = "恢复目标",
+            ["Tray.CheckUpdates"] = "检查更新",
             ["Tray.Exit"] = "退出",
             ["Tray.MinimizedTitle"] = "HideProcess",
             ["Tray.MinimizedText"] = "程序已最小化到托盘。",
@@ -63,27 +64,46 @@ public static class Localizer
             ["Settings.General"] = "通用",
             ["Settings.StartWithWindows"] = "开机自动启动",
             ["Settings.MinimizeToTray"] = "关闭窗口时最小化到托盘",
+            ["Settings.AutoCheckUpdates"] = "启动时自动检查更新",
+            ["Settings.CheckUpdatesNow"] = "立即检查",
             ["Settings.Language"] = "语言",
             ["Settings.Import"] = "导入",
             ["Settings.Export"] = "导出",
-            ["Settings.ImportSuccess"] = "配置导入成功。",
-            ["Settings.ExportSuccess"] = "配置导出成功。",
-            ["Settings.ImportFailed"] = "配置导入失败: {0}",
-            ["Settings.ExportFailed"] = "配置导出失败: {0}",
-            ["Settings.HotkeyWarningToggle"] = "隐藏热键与显示热键相同，将按切换模式工作。",
-            ["Settings.HotkeyWarningNoModifier"] = "{0} 建议包含 Ctrl/Alt/Shift/Win，避免误触。",
+            ["Settings.ImportSuccess"] = "设置导入成功。",
+            ["Settings.ExportSuccess"] = "设置导出成功。",
+            ["Settings.ImportFailed"] = "设置导入失败: {0}",
+            ["Settings.ExportFailed"] = "设置导出失败: {0}",
+            ["Settings.HotkeyWarningToggle"] = "隐藏热键与显示热键相同，将启用切换模式。",
+            ["Settings.HotkeyWarningNoModifier"] = "{0} 建议包含 Ctrl/Alt/Shift/Win 修饰键。",
             ["Settings.HotkeyWarningReserved"] = "{0} 可能与系统快捷键冲突: {1}",
             ["Settings.Cancel"] = "取消",
             ["Settings.Save"] = "保存",
             ["Hotkey.TitleHide"] = "设置隐藏热键",
             ["Hotkey.TitleShow"] = "设置显示热键",
             ["Hotkey.Title"] = "热键捕获",
-            ["Hotkey.Instruction"] = "请按下要设置的组合键，然后点击确定。",
-            ["Hotkey.Current"] = "当前组合",
+            ["Hotkey.Instruction"] = "请按下目标组合键，然后点击确定。",
+            ["Hotkey.Current"] = "当前组合键",
             ["Hotkey.Clear"] = "清空",
             ["Hotkey.Ok"] = "确定",
             ["Hotkey.Cancel"] = "取消",
-            ["Hotkey.Empty"] = "请至少按下一个按键。"
+            ["Hotkey.Empty"] = "请至少按下一个按键。",
+            ["Update.StatusChecking"] = "正在检查更新...",
+            ["Update.StatusNoUpdate"] = "当前已是最新版本。",
+            ["Update.NoUpdateTitle"] = "检查更新",
+            ["Update.NoUpdateMessage"] = "当前版本 {0} 已是最新版本。",
+            ["Update.StatusCheckFailed"] = "检查更新失败: {0}",
+            ["Update.CheckFailedTitle"] = "更新失败",
+            ["Update.CheckFailed"] = "无法检查更新: {0}",
+            ["Update.StatusAvailable"] = "发现新版本: {0}",
+            ["Update.AvailableTitle"] = "发现新版本",
+            ["Update.AvailablePrompt"] = "检测到新版本 {1}（当前 {0}）。\n是否立即下载并安装？",
+            ["Update.ReleaseNotesLabel"] = "更新说明：",
+            ["Update.NoInstallerAsset"] = "未找到可用安装包资源。",
+            ["Update.StatusOpenedReleasePage"] = "已打开发布页面。",
+            ["Update.StatusDownloading"] = "正在下载安装包...",
+            ["Update.StatusStartingInstaller"] = "安装程序已启动，即将退出当前应用。",
+            ["Update.StatusDownloadFailed"] = "下载更新失败: {0}",
+            ["Update.DownloadFailed"] = "下载或启动更新失败: {0}"
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -128,6 +148,7 @@ public static class Localizer
             ["Tray.ShowMain"] = "Show Main Window",
             ["Tray.HideTargets"] = "Hide Targets",
             ["Tray.ShowTargets"] = "Restore Targets",
+            ["Tray.CheckUpdates"] = "Check for Updates",
             ["Tray.Exit"] = "Exit",
             ["Tray.MinimizedTitle"] = "HideProcess",
             ["Tray.MinimizedText"] = "App is minimized to tray.",
@@ -140,6 +161,8 @@ public static class Localizer
             ["Settings.General"] = "General",
             ["Settings.StartWithWindows"] = "Start with Windows",
             ["Settings.MinimizeToTray"] = "Minimize to tray when closing",
+            ["Settings.AutoCheckUpdates"] = "Automatically check updates on startup",
+            ["Settings.CheckUpdatesNow"] = "Check now",
             ["Settings.Language"] = "Language",
             ["Settings.Import"] = "Import",
             ["Settings.Export"] = "Export",
@@ -160,62 +183,26 @@ public static class Localizer
             ["Hotkey.Clear"] = "Clear",
             ["Hotkey.Ok"] = "OK",
             ["Hotkey.Cancel"] = "Cancel",
-            ["Hotkey.Empty"] = "Please press at least one key."
+            ["Hotkey.Empty"] = "Please press at least one key.",
+            ["Update.StatusChecking"] = "Checking for updates...",
+            ["Update.StatusNoUpdate"] = "You are using the latest version.",
+            ["Update.NoUpdateTitle"] = "Check for Updates",
+            ["Update.NoUpdateMessage"] = "Current version {0} is up to date.",
+            ["Update.StatusCheckFailed"] = "Update check failed: {0}",
+            ["Update.CheckFailedTitle"] = "Update Error",
+            ["Update.CheckFailed"] = "Unable to check for updates: {0}",
+            ["Update.StatusAvailable"] = "New version available: {0}",
+            ["Update.AvailableTitle"] = "Update Available",
+            ["Update.AvailablePrompt"] = "A newer version {1} is available (current: {0}).\nDownload and install now?",
+            ["Update.ReleaseNotesLabel"] = "Release notes:",
+            ["Update.NoInstallerAsset"] = "No installer asset was found in the latest release.",
+            ["Update.StatusOpenedReleasePage"] = "Release page opened.",
+            ["Update.StatusDownloading"] = "Downloading installer...",
+            ["Update.StatusStartingInstaller"] = "Installer started. The app will now exit.",
+            ["Update.StatusDownloadFailed"] = "Update download failed: {0}",
+            ["Update.DownloadFailed"] = "Failed to download or start updater: {0}"
         }
     };
-
-    static Localizer()
-    {
-        AddOrReplace("zh-CN", "Tray.CheckUpdates", "检查更新");
-        AddOrReplace("zh-CN", "Settings.AutoCheckUpdates", "启动时自动检查更新");
-        AddOrReplace("zh-CN", "Update.StatusChecking", "正在检查更新...");
-        AddOrReplace("zh-CN", "Update.StatusNoUpdate", "当前已是最新版本。");
-        AddOrReplace("zh-CN", "Update.NoUpdateTitle", "检查更新");
-        AddOrReplace("zh-CN", "Update.NoUpdateMessage", "当前版本 {0} 已是最新版本。");
-        AddOrReplace("zh-CN", "Update.StatusCheckFailed", "检查更新失败: {0}");
-        AddOrReplace("zh-CN", "Update.CheckFailedTitle", "更新失败");
-        AddOrReplace("zh-CN", "Update.CheckFailed", "无法检查更新: {0}");
-        AddOrReplace("zh-CN", "Update.StatusAvailable", "检测到新版本: {0}");
-        AddOrReplace("zh-CN", "Update.AvailableTitle", "发现新版本");
-        AddOrReplace("zh-CN", "Update.AvailablePrompt", "检测到新版本 {1}（当前 {0}）。\n是否立即下载并安装？");
-        AddOrReplace("zh-CN", "Update.ReleaseNotesLabel", "更新说明：");
-        AddOrReplace("zh-CN", "Update.NoInstallerAsset", "未找到可用的安装包资源。");
-        AddOrReplace("zh-CN", "Update.StatusOpenedReleasePage", "已打开发布页面。");
-        AddOrReplace("zh-CN", "Update.StatusDownloading", "正在下载更新安装包...");
-        AddOrReplace("zh-CN", "Update.StatusStartingInstaller", "已启动安装程序，即将退出当前应用。");
-        AddOrReplace("zh-CN", "Update.StatusDownloadFailed", "下载更新失败: {0}");
-        AddOrReplace("zh-CN", "Update.DownloadFailed", "下载或启动更新失败: {0}");
-
-        AddOrReplace("en-US", "Tray.CheckUpdates", "Check for Updates");
-        AddOrReplace("en-US", "Settings.AutoCheckUpdates", "Automatically check updates on startup");
-        AddOrReplace("en-US", "Update.StatusChecking", "Checking for updates...");
-        AddOrReplace("en-US", "Update.StatusNoUpdate", "You are using the latest version.");
-        AddOrReplace("en-US", "Update.NoUpdateTitle", "Check for Updates");
-        AddOrReplace("en-US", "Update.NoUpdateMessage", "Current version {0} is up to date.");
-        AddOrReplace("en-US", "Update.StatusCheckFailed", "Update check failed: {0}");
-        AddOrReplace("en-US", "Update.CheckFailedTitle", "Update Error");
-        AddOrReplace("en-US", "Update.CheckFailed", "Unable to check for updates: {0}");
-        AddOrReplace("en-US", "Update.StatusAvailable", "New version available: {0}");
-        AddOrReplace("en-US", "Update.AvailableTitle", "Update Available");
-        AddOrReplace("en-US", "Update.AvailablePrompt", "A newer version {1} is available (current: {0}).\nDownload and install now?");
-        AddOrReplace("en-US", "Update.ReleaseNotesLabel", "Release notes:");
-        AddOrReplace("en-US", "Update.NoInstallerAsset", "No installer asset was found in the latest release.");
-        AddOrReplace("en-US", "Update.StatusOpenedReleasePage", "Release page opened.");
-        AddOrReplace("en-US", "Update.StatusDownloading", "Downloading installer...");
-        AddOrReplace("en-US", "Update.StatusStartingInstaller", "Installer started. The app will now exit.");
-        AddOrReplace("en-US", "Update.StatusDownloadFailed", "Update download failed: {0}");
-        AddOrReplace("en-US", "Update.DownloadFailed", "Failed to download or start updater: {0}");
-    }
-
-    private static void AddOrReplace(string languageCode, string key, string value)
-    {
-        if (!Resources.TryGetValue(languageCode, out var languageResources))
-        {
-            return;
-        }
-
-        languageResources[key] = value;
-    }
 
     public static IReadOnlyList<LanguageOption> SupportedLanguages { get; } =
     [

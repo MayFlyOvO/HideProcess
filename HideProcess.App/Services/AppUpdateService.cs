@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net;
 using System.Text.Json;
 
 namespace HideProcess.App.Services;
@@ -24,6 +25,11 @@ public sealed class AppUpdateService
     {
         var requestUri = $"https://api.github.com/repos/{_owner}/{_repo}/releases/latest";
         using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return await CheckForUpdatesFromReleaseListAsync(currentVersion, cancellationToken).ConfigureAwait(false);
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             return UpdateCheckResult.Failed($"HTTP {(int)response.StatusCode}");
@@ -31,17 +37,58 @@ public sealed class AppUpdateService
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
-        var root = document.RootElement;
+        return BuildResultFromRelease(currentVersion, document.RootElement);
+    }
 
-        var tagName = GetString(root, "tag_name");
+    private async Task<UpdateCheckResult> CheckForUpdatesFromReleaseListAsync(Version currentVersion, CancellationToken cancellationToken)
+    {
+        var requestUri = $"https://api.github.com/repos/{_owner}/{_repo}/releases?per_page=20";
+        using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            return UpdateCheckResult.Failed($"HTTP {(int)response.StatusCode}");
+        }
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (document.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            return UpdateCheckResult.Failed("Unexpected releases payload.");
+        }
+
+        foreach (var release in document.RootElement.EnumerateArray())
+        {
+            if (release.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            if (release.TryGetProperty("draft", out var draftElement) && draftElement.ValueKind == JsonValueKind.True)
+            {
+                continue;
+            }
+
+            var candidate = BuildResultFromRelease(currentVersion, release);
+            if (candidate.Status is UpdateCheckStatus.UpdateAvailable or UpdateCheckStatus.NoUpdate)
+            {
+                return candidate;
+            }
+        }
+
+        return UpdateCheckResult.NoUpdate(currentVersion, currentVersion);
+    }
+
+    private static UpdateCheckResult BuildResultFromRelease(Version currentVersion, JsonElement release)
+    {
+        var tagName = GetString(release, "tag_name");
         if (!TryParseVersion(tagName, out var latestVersion))
         {
             return UpdateCheckResult.Failed("Invalid release tag.");
         }
 
-        var releasePageUrl = GetString(root, "html_url");
-        var releaseNotes = GetString(root, "body");
-        var downloadUrl = ResolveInstallerDownloadUrl(root);
+        var releasePageUrl = GetString(release, "html_url");
+        var releaseNotes = GetString(release, "body");
+        var downloadUrl = ResolveInstallerDownloadUrl(release);
 
         if (latestVersion <= currentVersion)
         {

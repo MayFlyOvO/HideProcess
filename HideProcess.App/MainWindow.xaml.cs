@@ -589,7 +589,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private async Task CheckForUpdatesAsync(bool manualCheck)
+    internal Task CheckForUpdatesFromSettingsAsync(Window owner)
+    {
+        return CheckForUpdatesAsync(manualCheck: true, owner);
+    }
+
+    private async Task CheckForUpdatesAsync(bool manualCheck, Window? dialogOwner = null)
     {
         if (_isCheckingUpdates)
         {
@@ -638,7 +643,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 {
                     SetStatus(Localizer.T("Update.StatusNoUpdate"));
                     System.Windows.MessageBox.Show(
-                        this,
+                        dialogOwner ?? this,
                         Localizer.Format("Update.NoUpdateMessage", currentVersion),
                         Localizer.T("Update.NoUpdateTitle"),
                         MessageBoxButton.OK,
@@ -655,7 +660,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 if (manualCheck)
                 {
                     System.Windows.MessageBox.Show(
-                        this,
+                        dialogOwner ?? this,
                         Localizer.Format("Update.CheckFailed", error),
                         Localizer.T("Update.CheckFailedTitle"),
                         MessageBoxButton.OK,
@@ -683,7 +688,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
 
             var choice = System.Windows.MessageBox.Show(
-                this,
+                dialogOwner ?? this,
                 message,
                 Localizer.T("Update.AvailableTitle"),
                 MessageBoxButton.YesNo,
@@ -703,7 +708,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 }
 
                 System.Windows.MessageBox.Show(
-                    this,
+                    dialogOwner ?? this,
                     Localizer.T("Update.NoInstallerAsset"),
                     Localizer.T("Update.CheckFailedTitle"),
                     MessageBoxButton.OK,
@@ -724,7 +729,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 SetStatus(Localizer.Format("Update.StatusDownloadFailed", ex.Message));
                 System.Windows.MessageBox.Show(
-                    this,
+                    dialogOwner ?? this,
                     Localizer.Format("Update.DownloadFailed", ex.Message),
                     Localizer.T("Update.CheckFailedTitle"),
                     MessageBoxButton.OK,
