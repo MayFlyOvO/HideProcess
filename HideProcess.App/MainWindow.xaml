@@ -806,9 +806,12 @@
                     <Grid Width="120"
                           Height="120"
                           HorizontalAlignment="Center">
-                        <Ellipse Stroke="#FFE4EAF3"
-                                 StrokeThickness="8" />
+                        <Path Data="M 60,8 A 52,52 0 1 1 60,112 A 52,52 0 1 1 60,8"
+                              Stretch="None"
+                              Stroke="#FFE4EAF3"
+                              StrokeThickness="8" />
                         <Path Data="{Binding UpdateDownloadArcData}"
+                              Stretch="None"
                               Stroke="#FF0A84FF"
                               StrokeThickness="8"
                               StrokeStartLineCap="Round"
