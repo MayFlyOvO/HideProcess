@@ -173,6 +173,15 @@ public partial class SettingsWindow : Window
             MessageBoxImage.Warning);
     }
 
+    private void AboutButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new AboutWindow(_previewLanguage)
+        {
+            Owner = this
+        };
+        dialog.ShowDialog();
+    }
+
     private void LanguageComboBox_OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (LanguageComboBox.SelectedItem is not LanguageOption option)
@@ -232,6 +241,7 @@ public partial class SettingsWindow : Window
         CheckUpdatesButtonTextBlock.Text = Localizer.T("Settings.CheckUpdatesNow", _previewLanguage);
         CancelButtonTextBlock.Text = Localizer.T("Settings.Cancel", _previewLanguage);
         SaveButtonTextBlock.Text = Localizer.T("Settings.Save", _previewLanguage);
+        AboutButton.ToolTip = Localizer.T("Settings.AboutTooltip", _previewLanguage);
         UpdateHotkeyPreview();
     }
 

@@ -27,6 +27,11 @@ public sealed class AppUpdateService
     {
         var requestUri = $"https://api.github.com/repos/{_owner}/{_repo}/releases/latest";
         using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            return await CheckForUpdatesByRedirectAsync(currentVersion, cancellationToken).ConfigureAwait(false);
+        }
+
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return await CheckForUpdatesFromReleaseListAsync(currentVersion, cancellationToken).ConfigureAwait(false);
@@ -46,6 +51,11 @@ public sealed class AppUpdateService
     {
         var requestUri = $"https://api.github.com/repos/{_owner}/{_repo}/releases?per_page=20";
         using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            return await CheckForUpdatesByRedirectAsync(currentVersion, cancellationToken).ConfigureAwait(false);
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             return UpdateCheckResult.Failed($"HTTP {(int)response.StatusCode}");
@@ -78,6 +88,42 @@ public sealed class AppUpdateService
         }
 
         return UpdateCheckResult.NoUpdate(currentVersion, currentVersion);
+    }
+
+    private async Task<UpdateCheckResult> CheckForUpdatesByRedirectAsync(Version currentVersion, CancellationToken cancellationToken)
+    {
+        var requestUri = $"https://github.com/{_owner}/{_repo}/releases/latest";
+        using var response = await _httpClient.GetAsync(requestUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            return UpdateCheckResult.Failed($"HTTP {(int)response.StatusCode}");
+        }
+
+        var finalUri = response.RequestMessage?.RequestUri;
+        if (finalUri is null)
+        {
+            return UpdateCheckResult.Failed("Cannot resolve latest release URL.");
+        }
+
+        var releasePageUrl = finalUri.ToString();
+        var tagName = ExtractTagFromReleaseUrl(finalUri);
+        if (!TryParseVersion(tagName, out var latestVersion))
+        {
+            return UpdateCheckResult.Failed("Invalid release tag.");
+        }
+
+        if (latestVersion <= currentVersion)
+        {
+            return UpdateCheckResult.NoUpdate(currentVersion, latestVersion);
+        }
+
+        return UpdateCheckResult.Available(
+            currentVersion,
+            latestVersion,
+            tagName ?? latestVersion.ToString(),
+            releasePageUrl,
+            null,
+            BuildDeterministicDownloadUrl(tagName ?? latestVersion.ToString(), _packageType));
     }
 
     private static UpdateCheckResult BuildResultFromRelease(Version currentVersion, JsonElement release, UpdatePackageType packageType)
@@ -174,6 +220,34 @@ public sealed class AppUpdateService
         }
 
         return false;
+    }
+
+    private static string? ExtractTagFromReleaseUrl(Uri uri)
+    {
+        var marker = "/releases/tag/";
+        var path = uri.AbsolutePath;
+        var index = path.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (index < 0)
+        {
+            return null;
+        }
+
+        var tagPart = path[(index + marker.Length)..];
+        if (string.IsNullOrWhiteSpace(tagPart))
+        {
+            return null;
+        }
+
+        return Uri.UnescapeDataString(tagPart);
+    }
+
+    private string BuildDeterministicDownloadUrl(string tagName, UpdatePackageType packageType)
+    {
+        var assetName = packageType == UpdatePackageType.SingleFile
+            ? "HideProcess-SingleFile.exe"
+            : "HideProcess-Setup.exe";
+        var encodedTag = Uri.EscapeDataString(tagName);
+        return $"https://github.com/{_owner}/{_repo}/releases/download/{encodedTag}/{assetName}";
     }
 
     private static string? ResolveDownloadUrl(JsonElement root, UpdatePackageType packageType)

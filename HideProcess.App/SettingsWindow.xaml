@@ -308,14 +308,24 @@
                                    VerticalAlignment="Center" />
                     </StackPanel>
 
-                    <Button Grid.Column="1"
-                            Style="{StaticResource TitleBarButtonStyle}"
-                            Margin="0,0,8,0"
-                            Click="CloseButton_OnClick">
-                        <TextBlock Text="&#xE8BB;"
-                                   FontFamily="Segoe Fluent Icons"
-                                   FontSize="10" />
-                    </Button>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Margin="0,0,8,0">
+                        <Button x:Name="AboutButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Margin="0,0,6,0"
+                                Click="AboutButton_OnClick">
+                            <TextBlock Text="&#xE946;"
+                                       FontFamily="Segoe Fluent Icons"
+                                       FontSize="10" />
+                        </Button>
+                        <Button Style="{StaticResource TitleBarButtonStyle}"
+                                Click="CloseButton_OnClick">
+                            <TextBlock Text="&#xE8BB;"
+                                       FontFamily="Segoe Fluent Icons"
+                                       FontSize="10" />
+                        </Button>
+                    </StackPanel>
                 </Grid>
 
                 <StackPanel Grid.Row="1" Margin="16,14,16,0">
