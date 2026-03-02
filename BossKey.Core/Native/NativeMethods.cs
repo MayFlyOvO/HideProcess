@@ -28,6 +28,7 @@ internal static class NativeMethods
     public const uint WsExTransparent = 0x00000020;
     public const uint WsExToolWindow = 0x00000080;
     public const uint WsExNoActivate = 0x08000000;
+    public const uint ProcessSuspendResume = 0x0800;
 
     public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
     public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
@@ -148,4 +149,17 @@ internal static class NativeMethods
 
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
     public static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr OpenProcess(uint dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, int dwProcessId);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool CloseHandle(IntPtr hObject);
+
+    [DllImport("ntdll.dll")]
+    public static extern int NtSuspendProcess(IntPtr processHandle);
+
+    [DllImport("ntdll.dll")]
+    public static extern int NtResumeProcess(IntPtr processHandle);
 }

@@ -10,6 +10,7 @@ public sealed class ProcessWindowService
     private readonly ProcessAudioMuteService _processAudioMuteService = new();
     private readonly Dictionary<IntPtr, HiddenWindowState> _hiddenWindows = [];
     private readonly Dictionary<int, ProcessMuteSnapshot> _mutedProcesses = [];
+    private readonly Dictionary<int, FrozenProcessSnapshot> _frozenProcesses = [];
 
     public bool HasHiddenWindows => _hiddenWindows.Count > 0;
     public bool HasHiddenWindowsInGroup(string groupId) =>
@@ -77,39 +78,45 @@ public sealed class ProcessWindowService
             return 0;
         }
 
-        var processedMuteTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (_, target) in matchedWindows)
-        {
-            if (!target.MuteOnHide)
-            {
-                continue;
-            }
-
-            var muteKey = GetTargetMuteKey(target);
-            if (processedMuteTargets.Add(muteKey))
-            {
-                TryMuteMatchingProcessesForCurrentSession(target, groupId);
-            }
-        }
-
-        var hiddenCount = 0;
-        foreach (var (window, _) in matchedWindows)
+        var hiddenMatches = new List<(WindowInfo Window, TargetAppConfig Target)>();
+        foreach (var (window, target) in matchedWindows)
         {
             var showState = GetWindowShowState(window.Handle);
             if (NativeMethods.ShowWindow(window.Handle, NativeMethods.SwHide))
             {
-                _hiddenWindows[window.Handle] = new HiddenWindowState(window.Handle, showState, groupId);
-                hiddenCount++;
+                _hiddenWindows[window.Handle] = new HiddenWindowState(window.Handle, showState, groupId, target.Id);
+                hiddenMatches.Add((window, target));
             }
         }
 
-        return hiddenCount;
+        if (hiddenMatches.Count == 0)
+        {
+            return 0;
+        }
+
+        var processedMuteTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var processedFreezeTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (_, target) in hiddenMatches)
+        {
+            if (target.MuteOnHide && processedMuteTargets.Add(target.Id))
+            {
+                TryMuteMatchingProcessesForCurrentSession(target, groupId);
+            }
+
+            if (target.FreezeOnHide && processedFreezeTargets.Add(target.Id))
+            {
+                TryFreezeMatchingProcessesForCurrentSession(target, groupId);
+            }
+        }
+
+        return hiddenMatches.Count;
     }
 
     public int ShowHiddenTargets(string? groupId = null, bool bringToFront = true)
     {
         if (_hiddenWindows.Count == 0)
         {
+            RestoreFrozenProcesses(groupId);
             RestoreMutedProcesses(groupId);
             return 0;
         }
@@ -122,9 +129,12 @@ public sealed class ProcessWindowService
             .ToList();
         if (hiddenWindows.Count == 0)
         {
+            RestoreFrozenProcesses(groupId);
             RestoreMutedProcesses(groupId);
             return 0;
         }
+
+        RestoreFrozenProcesses(groupId);
 
         foreach (var hiddenWindow in hiddenWindows)
         {
@@ -148,7 +158,6 @@ public sealed class ProcessWindowService
             NativeMethods.ShowWindow(handle, command);
             restoredCount++;
 
-            // Keep focus behavior for non-minimized windows only.
             if (hiddenWindow.ShowState != WindowShowState.Minimized)
             {
                 firstRestoredWindow ??= handle;
@@ -166,23 +175,27 @@ public sealed class ProcessWindowService
 
     public int ShowHiddenTargets(IEnumerable<TargetAppConfig> targets, string? groupId = null, bool bringToFront = true)
     {
-        var targetList = targets.ToList();
-        if (targetList.Count == 0)
+        var targetIds = targets
+            .Select(static target => target.Id)
+            .Where(static id => !string.IsNullOrWhiteSpace(id))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (targetIds.Count == 0)
         {
-            RestoreMutedProcesses(targetList, groupId);
             return 0;
         }
 
         var hiddenWindows = _hiddenWindows.Values
             .Where(hiddenWindow => groupId is null || string.Equals(hiddenWindow.GroupId, groupId, StringComparison.Ordinal))
-            .Where(hiddenWindow => TryBuildHiddenWindowInfo(hiddenWindow.Handle, out var windowInfo)
-                                   && TryGetMatchingTarget(windowInfo.ProcessName, windowInfo.ProcessPath, targetList, out _))
+            .Where(hiddenWindow => targetIds.Contains(hiddenWindow.TargetId))
             .ToList();
         if (hiddenWindows.Count == 0)
         {
-            RestoreMutedProcesses(targetList, groupId);
+            RestoreFrozenProcesses(targetIds, groupId);
+            RestoreMutedProcesses(targetIds, groupId);
             return 0;
         }
+
+        RestoreFrozenProcesses(targetIds, groupId);
 
         var restoredCount = 0;
         IntPtr? firstRestoredWindow = null;
@@ -219,7 +232,7 @@ public sealed class ProcessWindowService
             NativeMethods.SetForegroundWindow(firstRestoredWindow.Value);
         }
 
-        RestoreMutedProcesses(targetList, groupId);
+        RestoreMutedProcesses(targetIds, groupId);
         return restoredCount;
     }
 
@@ -293,45 +306,6 @@ public sealed class ProcessWindowService
             WindowTitle = windowInfo.WindowTitle
         };
         return true;
-    }
-
-    private static bool TryBuildHiddenWindowInfo(IntPtr handle, out WindowInfo windowInfo)
-    {
-        windowInfo = null!;
-
-        if (!NativeMethods.IsWindow(handle))
-        {
-            return false;
-        }
-
-        NativeMethods.GetWindowThreadProcessId(handle, out var processIdRaw);
-        var processId = unchecked((int)processIdRaw);
-        if (processId <= 0 || processId == Environment.ProcessId)
-        {
-            return false;
-        }
-
-        Process process;
-        try
-        {
-            process = Process.GetProcessById(processId);
-        }
-        catch
-        {
-            return false;
-        }
-
-        try
-        {
-            var processName = NormalizeProcessName(process.ProcessName);
-            var processPath = TryGetProcessPath(process);
-            windowInfo = new WindowInfo(handle, processId, processName, processPath, string.Empty);
-            return true;
-        }
-        finally
-        {
-            process.Dispose();
-        }
     }
 
     private static bool TryBuildWindowInfo(IntPtr handle, out WindowInfo windowInfo)
@@ -444,7 +418,26 @@ public sealed class ProcessWindowService
         var snapshots = _processAudioMuteService.CaptureAndMuteProcesses(candidates);
         foreach (var (processId, originalMuteState) in snapshots)
         {
-            _mutedProcesses[processId] = new ProcessMuteSnapshot(processId, originalMuteState, groupId);
+            _mutedProcesses[processId] = new ProcessMuteSnapshot(processId, originalMuteState, groupId, target.Id);
+        }
+    }
+
+    private void TryFreezeMatchingProcessesForCurrentSession(TargetAppConfig target, string? groupId)
+    {
+        var candidates = EnumerateMatchingProcessIds(target)
+            .Where(processId => !_frozenProcesses.ContainsKey(processId))
+            .ToList();
+        if (candidates.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var processId in candidates)
+        {
+            if (TrySuspendProcess(processId))
+            {
+                _frozenProcesses[processId] = new FrozenProcessSnapshot(processId, groupId, target.Id);
+            }
         }
     }
 
@@ -475,7 +468,6 @@ public sealed class ProcessWindowService
                     var pathMatched = !string.IsNullOrWhiteSpace(processPath)
                         && string.Equals(processPath, targetPath, StringComparison.OrdinalIgnoreCase);
 
-                    // If path is inaccessible, keep this process by name fallback for multi-process apps (e.g. Edge).
                     if (!pathMatched && !string.IsNullOrWhiteSpace(processPath))
                     {
                         continue;
@@ -494,11 +486,6 @@ public sealed class ProcessWindowService
         }
 
         return processIds;
-    }
-
-    private static string GetTargetMuteKey(TargetAppConfig target)
-    {
-        return $"{NormalizeProcessName(target.ProcessName)}|{target.ProcessPath ?? string.Empty}";
     }
 
     private void RestoreMutedProcesses(string? groupId)
@@ -527,23 +514,15 @@ public sealed class ProcessWindowService
         _processAudioMuteService.RestoreMuteStates(snapshots);
     }
 
-    private void RestoreMutedProcesses(IEnumerable<TargetAppConfig> targets, string? groupId)
+    private void RestoreMutedProcesses(HashSet<string> targetIds, string? groupId)
     {
-        if (_mutedProcesses.Count == 0)
-        {
-            return;
-        }
-
-        var processIds = targets
-            .SelectMany(EnumerateMatchingProcessIds)
-            .ToHashSet();
-        if (processIds.Count == 0)
+        if (_mutedProcesses.Count == 0 || targetIds.Count == 0)
         {
             return;
         }
 
         var targetEntries = _mutedProcesses
-            .Where(entry => processIds.Contains(entry.Key)
+            .Where(entry => targetIds.Contains(entry.Value.TargetId)
                             && (groupId is null || string.Equals(entry.Value.GroupId, groupId, StringComparison.Ordinal)))
             .ToList();
         if (targetEntries.Count == 0)
@@ -562,6 +541,87 @@ public sealed class ProcessWindowService
         _processAudioMuteService.RestoreMuteStates(snapshots);
     }
 
+    private void RestoreFrozenProcesses(string? groupId)
+    {
+        if (_frozenProcesses.Count == 0)
+        {
+            return;
+        }
+
+        var targetEntries = _frozenProcesses
+            .Where(entry => groupId is null || string.Equals(entry.Value.GroupId, groupId, StringComparison.Ordinal))
+            .ToList();
+        if (targetEntries.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var entry in targetEntries)
+        {
+            TryResumeProcess(entry.Key);
+            _frozenProcesses.Remove(entry.Key);
+        }
+    }
+
+    private void RestoreFrozenProcesses(HashSet<string> targetIds, string? groupId)
+    {
+        if (_frozenProcesses.Count == 0 || targetIds.Count == 0)
+        {
+            return;
+        }
+
+        var targetEntries = _frozenProcesses
+            .Where(entry => targetIds.Contains(entry.Value.TargetId)
+                            && (groupId is null || string.Equals(entry.Value.GroupId, groupId, StringComparison.Ordinal)))
+            .ToList();
+        if (targetEntries.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var entry in targetEntries)
+        {
+            TryResumeProcess(entry.Key);
+            _frozenProcesses.Remove(entry.Key);
+        }
+    }
+
+    private static bool TrySuspendProcess(int processId)
+    {
+        var processHandle = NativeMethods.OpenProcess(NativeMethods.ProcessSuspendResume, false, processId);
+        if (processHandle == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        try
+        {
+            return NativeMethods.NtSuspendProcess(processHandle) >= 0;
+        }
+        finally
+        {
+            NativeMethods.CloseHandle(processHandle);
+        }
+    }
+
+    private static bool TryResumeProcess(int processId)
+    {
+        var processHandle = NativeMethods.OpenProcess(NativeMethods.ProcessSuspendResume, false, processId);
+        if (processHandle == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        try
+        {
+            return NativeMethods.NtResumeProcess(processHandle) >= 0;
+        }
+        finally
+        {
+            NativeMethods.CloseHandle(processHandle);
+        }
+    }
+
     private sealed record WindowInfo(
         IntPtr Handle,
         int ProcessId,
@@ -572,12 +632,19 @@ public sealed class ProcessWindowService
     private sealed record HiddenWindowState(
         IntPtr Handle,
         WindowShowState ShowState,
-        string? GroupId);
+        string? GroupId,
+        string TargetId);
 
     private sealed record ProcessMuteSnapshot(
         int ProcessId,
         bool OriginalMuteState,
-        string? GroupId);
+        string? GroupId,
+        string TargetId);
+
+    private sealed record FrozenProcessSnapshot(
+        int ProcessId,
+        string? GroupId,
+        string TargetId);
 
     private enum WindowShowState
     {

@@ -7,4 +7,5 @@ public sealed class TargetAppConfig
     public string? ProcessPath { get; set; }
     public bool Enabled { get; set; } = true;
     public bool MuteOnHide { get; set; }
+    public bool FreezeOnHide { get; set; }
 }

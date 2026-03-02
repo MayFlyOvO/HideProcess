@@ -1,6 +1,10 @@
+using System.Diagnostics;
+using System.Linq;
+using System.Security.Principal;
 using System.Threading;
 using System.Windows;
 using BossKey.App.Services;
+using BossKey.Core.Services;
 
 namespace BossKey.App;
 
@@ -8,6 +12,7 @@ public partial class App : System.Windows.Application
 {
     private const string SingleInstanceMutexName = "BossKey.App.SingleInstance";
     private const string DuplicateLaunchEventName = "BossKey.App.DuplicateLaunchEvent";
+    private const string ElevatedRelaunchArgument = "--bosskey-elevated";
     private readonly RuntimeSessionService _runtimeSessionService = new();
     private Mutex? _singleInstanceMutex;
     private EventWaitHandle? _duplicateLaunchEvent;
@@ -16,6 +21,12 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        if (ShouldRelaunchAsAdministrator(e.Args) && TryRestartAsAdministrator())
+        {
+            Shutdown();
+            return;
+        }
+
         var createdNew = false;
         _singleInstanceMutex = new Mutex(initiallyOwned: true, SingleInstanceMutexName, out createdNew);
 
@@ -61,6 +72,60 @@ public partial class App : System.Windows.Application
         }
 
         base.OnExit(e);
+    }
+
+    internal static bool IsRunningAsAdministrator()
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    internal static bool TryRestartAsAdministrator()
+    {
+        var executablePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(executablePath))
+        {
+            return false;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(executablePath)
+            {
+                UseShellExecute = true,
+                Verb = "runas",
+                Arguments = ElevatedRelaunchArgument
+            });
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool ShouldRelaunchAsAdministrator(string[] args)
+    {
+        if (args.Any(arg => string.Equals(arg, ElevatedRelaunchArgument, StringComparison.OrdinalIgnoreCase)))
+        {
+            return false;
+        }
+
+        if (IsRunningAsAdministrator())
+        {
+            return false;
+        }
+
+        try
+        {
+            var settings = new JsonSettingsStore().Load();
+            return settings.RunAsAdministrator;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private void InitializeDuplicateLaunchNotifier()

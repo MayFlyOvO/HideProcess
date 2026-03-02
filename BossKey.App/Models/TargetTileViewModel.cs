@@ -52,6 +52,21 @@ public sealed class TargetTileViewModel : INotifyPropertyChanged
         }
     }
 
+    public bool FreezeOnHide
+    {
+        get => _config.FreezeOnHide;
+        set
+        {
+            if (_config.FreezeOnHide == value)
+            {
+                return;
+            }
+
+            _config.FreezeOnHide = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FreezeOnHide)));
+        }
+    }
+
     public ImageSource IconSource
     {
         get => _iconSource;

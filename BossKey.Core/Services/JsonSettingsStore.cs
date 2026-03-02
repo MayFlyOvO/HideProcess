@@ -114,7 +114,8 @@ public sealed class JsonSettingsStore
                         ProcessName = target.ProcessName,
                         ProcessPath = target.ProcessPath,
                         Enabled = target.Enabled,
-                        MuteOnHide = target.MuteOnHide
+                        MuteOnHide = target.MuteOnHide,
+                        FreezeOnHide = target.FreezeOnHide
                     })
                     .ToList()
             });
@@ -139,7 +140,8 @@ public sealed class JsonSettingsStore
                 ProcessName = target.ProcessName,
                 ProcessPath = target.ProcessPath,
                 Enabled = target.Enabled,
-                MuteOnHide = target.MuteOnHide
+                MuteOnHide = target.MuteOnHide,
+                FreezeOnHide = target.FreezeOnHide
             })
             .ToList();
 
@@ -162,3 +164,4 @@ public sealed class JsonSettingsStore
         return binding;
     }
 }
+

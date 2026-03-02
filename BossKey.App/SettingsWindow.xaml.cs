@@ -311,6 +311,7 @@ public partial class SettingsWindow : Window
         SetGroupShowHotkeyButtonTextBlock.Text = Localizer.T("Settings.SetHotkey", _previewLanguage);
         GeneralSectionTextBlock.Text = Localizer.T("Settings.General", _previewLanguage);
         StartWithWindowsCheckBox.Content = Localizer.T("Settings.StartWithWindows", _previewLanguage);
+        RunAsAdministratorCheckBox.Content = Localizer.T("Settings.RunAsAdministrator", _previewLanguage);
         MinimizeToTrayCheckBox.Content = Localizer.T("Settings.MinimizeToTray", _previewLanguage);
         AutoCheckUpdatesCheckBox.Content = Localizer.T("Settings.AutoCheckUpdates", _previewLanguage);
         LanguageLabel.Text = Localizer.T("Settings.Language", _previewLanguage);
@@ -392,6 +393,7 @@ public partial class SettingsWindow : Window
     private void SyncControlsFromWorkingCopy()
     {
         StartWithWindowsCheckBox.IsChecked = _workingCopy.StartWithWindows;
+        RunAsAdministratorCheckBox.IsChecked = _workingCopy.RunAsAdministrator;
         MinimizeToTrayCheckBox.IsChecked = _workingCopy.MinimizeToTray;
         AutoCheckUpdatesCheckBox.IsChecked = _workingCopy.AutoCheckForUpdates;
         LanguageComboBox.SelectedItem = Localizer.SupportedLanguages.FirstOrDefault(
@@ -403,6 +405,7 @@ public partial class SettingsWindow : Window
     private void SyncControlsToWorkingCopy()
     {
         _workingCopy.StartWithWindows = StartWithWindowsCheckBox.IsChecked == true;
+        _workingCopy.RunAsAdministrator = RunAsAdministratorCheckBox.IsChecked == true;
         _workingCopy.MinimizeToTray = MinimizeToTrayCheckBox.IsChecked == true;
         _workingCopy.AutoCheckForUpdates = AutoCheckUpdatesCheckBox.IsChecked != false;
         _workingCopy.Language = _previewLanguage;
@@ -476,6 +479,7 @@ public partial class SettingsWindow : Window
             HideHotkey = HotkeyBinding.FromKeys(source.HideHotkey.Keys),
             ShowHotkey = HotkeyBinding.FromKeys(source.ShowHotkey.Keys),
             StartWithWindows = source.StartWithWindows,
+            RunAsAdministrator = source.RunAsAdministrator,
             MinimizeToTray = source.MinimizeToTray,
             AutoCheckForUpdates = source.AutoCheckForUpdates,
             LastUpdateCheckUtc = source.LastUpdateCheckUtc,
@@ -498,7 +502,8 @@ public partial class SettingsWindow : Window
                     ProcessName = target.ProcessName,
                     ProcessPath = target.ProcessPath,
                     Enabled = target.Enabled,
-                    MuteOnHide = target.MuteOnHide
+                    MuteOnHide = target.MuteOnHide,
+                    FreezeOnHide = target.FreezeOnHide
                 })
                 .ToList(),
             Groups = source.Groups
@@ -516,7 +521,8 @@ public partial class SettingsWindow : Window
                             ProcessName = target.ProcessName,
                             ProcessPath = target.ProcessPath,
                             Enabled = target.Enabled,
-                            MuteOnHide = target.MuteOnHide
+                            MuteOnHide = target.MuteOnHide,
+                            FreezeOnHide = target.FreezeOnHide
                         })
                         .ToList()
                 })
@@ -529,6 +535,7 @@ public partial class SettingsWindow : Window
         destination.HideHotkey = HotkeyBinding.FromKeys(source.HideHotkey.Keys);
         destination.ShowHotkey = HotkeyBinding.FromKeys(source.ShowHotkey.Keys);
         destination.StartWithWindows = source.StartWithWindows;
+        destination.RunAsAdministrator = source.RunAsAdministrator;
         destination.MinimizeToTray = source.MinimizeToTray;
         destination.AutoCheckForUpdates = source.AutoCheckForUpdates;
         destination.LastUpdateCheckUtc = source.LastUpdateCheckUtc;
@@ -551,7 +558,8 @@ public partial class SettingsWindow : Window
                 ProcessName = target.ProcessName,
                 ProcessPath = target.ProcessPath,
                 Enabled = target.Enabled,
-                MuteOnHide = target.MuteOnHide
+                MuteOnHide = target.MuteOnHide,
+                FreezeOnHide = target.FreezeOnHide
             })
             .ToList();
         destination.Groups = source.Groups
@@ -569,7 +577,8 @@ public partial class SettingsWindow : Window
                         ProcessName = target.ProcessName,
                         ProcessPath = target.ProcessPath,
                         Enabled = target.Enabled,
-                        MuteOnHide = target.MuteOnHide
+                        MuteOnHide = target.MuteOnHide,
+                        FreezeOnHide = target.FreezeOnHide
                     })
                     .ToList()
             })

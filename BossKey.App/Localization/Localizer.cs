@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace BossKey.App.Localization;
 
@@ -61,6 +61,7 @@ public static class Localizer
             ["Main.GroupDeletePrompt"] = "删除分组 {0}？组内程序会移回未分组。",
             ["Main.TargetEnabled"] = "启用",
             ["Main.TargetMuteOnHide"] = "隐藏时静音",
+            ["Main.TargetFreezeOnHide"] = "隐藏时冻结",
             ["Main.GroupRename"] = "重命名分组",
             ["Main.GroupDelete"] = "删除分组",
             ["Main.GroupToggle"] = "折叠或展开分组",
@@ -87,6 +88,7 @@ public static class Localizer
             ["Settings.GroupShowHotkey"] = "分组显示热键",
             ["Settings.General"] = "通用",
             ["Settings.StartWithWindows"] = "开机自动启动",
+            ["Settings.RunAsAdministrator"] = "以管理员身份运行（有助于冻结高权限进程）",
             ["Settings.MinimizeToTray"] = "关闭窗口时最小化到托盘",
             ["Settings.AutoCheckUpdates"] = "启动时自动检查更新",
             ["Settings.CheckUpdatesNow"] = "立即检查",
@@ -97,6 +99,7 @@ public static class Localizer
             ["Settings.ExportSuccess"] = "设置导出成功。",
             ["Settings.ImportFailed"] = "导入失败: {0}",
             ["Settings.ExportFailed"] = "导出失败: {0}",
+            ["Settings.RunAsAdministratorChanged"] = "管理员模式设置将在下次启动后生效。",
             ["Settings.HotkeyWarningToggle"] = "隐藏和显示热键相同，将启用切换模式。",
             ["Settings.HotkeyWarningNoModifier"] = "{0} 建议包含 Ctrl/Alt/Shift/Win，以避免误触。",
             ["Settings.HotkeyWarningReserved"] = "{0} 可能与系统快捷键冲突: {1}",
@@ -197,6 +200,7 @@ public static class Localizer
             ["Main.GroupDeletePrompt"] = "Delete group {0}? Apps inside it will be moved back to Ungrouped.",
             ["Main.TargetEnabled"] = "Enabled",
             ["Main.TargetMuteOnHide"] = "Mute on hide",
+            ["Main.TargetFreezeOnHide"] = "Freeze on hide",
             ["Main.GroupRename"] = "Rename group",
             ["Main.GroupDelete"] = "Delete group",
             ["Main.GroupToggle"] = "Collapse or expand group",
@@ -223,6 +227,7 @@ public static class Localizer
             ["Settings.GroupShowHotkey"] = "Group Show Hotkey",
             ["Settings.General"] = "General",
             ["Settings.StartWithWindows"] = "Start with Windows",
+            ["Settings.RunAsAdministrator"] = "Run as administrator (helps freeze elevated processes)",
             ["Settings.MinimizeToTray"] = "Minimize to tray when closing",
             ["Settings.AutoCheckUpdates"] = "Automatically check updates on startup",
             ["Settings.CheckUpdatesNow"] = "Check now",
@@ -233,6 +238,7 @@ public static class Localizer
             ["Settings.ExportSuccess"] = "Settings exported successfully.",
             ["Settings.ImportFailed"] = "Import failed: {0}",
             ["Settings.ExportFailed"] = "Export failed: {0}",
+            ["Settings.RunAsAdministratorChanged"] = "Administrator mode setting will apply after the next launch.",
             ["Settings.HotkeyWarningToggle"] = "Hide and show hotkeys are identical. Toggle mode is enabled.",
             ["Settings.HotkeyWarningNoModifier"] = "{0} should include Ctrl/Alt/Shift/Win to avoid accidental trigger.",
             ["Settings.HotkeyWarningReserved"] = "{0} may conflict with system shortcut: {1}",
@@ -344,3 +350,4 @@ public static class Localizer
         return string.Format(CultureInfo.CurrentCulture, T(key), args);
     }
 }
+

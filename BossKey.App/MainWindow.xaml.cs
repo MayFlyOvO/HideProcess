@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -67,6 +67,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _newGroupButtonText = "New Group";
     private string _targetEnabledText = "Enabled";
     private string _targetMuteOnHideText = "Mute on hide";
+    private string _targetFreezeOnHideText = "Freeze on hide";
     private string _renameGroupText = "Rename group";
     private string _deleteGroupText = "Delete group";
     private string _toggleGroupText = "Collapse or expand group";
@@ -168,6 +169,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             _targetMuteOnHideText = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TargetMuteOnHideText)));
+        }
+    }
+
+    public string TargetFreezeOnHideText
+    {
+        get => _targetFreezeOnHideText;
+        private set
+        {
+            if (string.Equals(_targetFreezeOnHideText, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _targetFreezeOnHideText = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TargetFreezeOnHideText)));
         }
     }
 
@@ -635,7 +651,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         ShowTargets();
     }
-
     private void OpenSettingsButton_OnClick(object sender, RoutedEventArgs e)
     {
         PersistSettings();
@@ -645,9 +660,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        var previousRunAsAdministrator = _settings.RunAsAdministrator;
+
         _settings.HideHotkey = HotkeyBinding.FromKeys(dialog.UpdatedSettings.HideHotkey.Keys);
         _settings.ShowHotkey = HotkeyBinding.FromKeys(dialog.UpdatedSettings.ShowHotkey.Keys);
         _settings.StartWithWindows = dialog.UpdatedSettings.StartWithWindows;
+        _settings.RunAsAdministrator = dialog.UpdatedSettings.RunAsAdministrator;
         _settings.MinimizeToTray = dialog.UpdatedSettings.MinimizeToTray;
         _settings.AutoCheckForUpdates = dialog.UpdatedSettings.AutoCheckForUpdates;
         _settings.LastUpdateCheckUtc = dialog.UpdatedSettings.LastUpdateCheckUtc;
@@ -661,7 +679,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ProcessName = target.ProcessName,
                 ProcessPath = target.ProcessPath,
                 Enabled = target.Enabled,
-                MuteOnHide = target.MuteOnHide
+                MuteOnHide = target.MuteOnHide,
+                FreezeOnHide = target.FreezeOnHide
             })
             .ToList();
         _settings.Groups = dialog.UpdatedSettings.Groups
@@ -679,7 +698,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         ProcessName = target.ProcessName,
                         ProcessPath = target.ProcessPath,
                         Enabled = target.Enabled,
-                        MuteOnHide = target.MuteOnHide
+                        MuteOnHide = target.MuteOnHide,
+                        FreezeOnHide = target.FreezeOnHide
                     })
                     .ToList()
             })
@@ -690,6 +710,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Localizer.SetLanguage(_settings.Language);
         ApplyLocalization();
         PersistSettings();
+
+        if (previousRunAsAdministrator != _settings.RunAsAdministrator)
+        {
+            System.Windows.MessageBox.Show(
+                this,
+                Localizer.T("Settings.RunAsAdministratorChanged"),
+                Localizer.T("Main.HintTitle"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
         SetStatus(Localizer.T("Main.StatusSettingsApplied"));
     }
 
@@ -838,7 +869,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         ProcessName = tile.Config.ProcessName,
                         ProcessPath = tile.Config.ProcessPath,
                         Enabled = tile.Config.Enabled,
-                        MuteOnHide = tile.Config.MuteOnHide
+                        MuteOnHide = tile.Config.MuteOnHide,
+                        FreezeOnHide = tile.Config.FreezeOnHide
                     })
                     .ToList()
             })
@@ -851,7 +883,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ProcessName = target.ProcessName,
                 ProcessPath = target.ProcessPath,
                 Enabled = target.Enabled,
-                MuteOnHide = target.MuteOnHide
+                MuteOnHide = target.MuteOnHide,
+                FreezeOnHide = target.FreezeOnHide
             })
             .ToList();
 
@@ -952,7 +985,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ProcessName = processName,
                 ProcessPath = processPath,
                 Enabled = true,
-                MuteOnHide = false
+                MuteOnHide = false,
+                FreezeOnHide = false
             },
             _appIconService.GetIcon(processPath)));
         defaultGroup.RefreshHotkeyText();
@@ -984,7 +1018,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ProcessName = target.ProcessName,
                 ProcessPath = target.ProcessPath,
                 Enabled = target.Enabled,
-                MuteOnHide = target.MuteOnHide
+                MuteOnHide = target.MuteOnHide,
+                FreezeOnHide = target.FreezeOnHide
             },
             _appIconService.GetIcon(target.ProcessPath)));
         return new TargetGroupViewModel(group, tiles);
@@ -1545,6 +1580,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         PersistSettings();
     }
 
+    private void ToggleTargetFreezeMenuItem_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement element || element.DataContext is not TargetTileViewModel tile)
+        {
+            return;
+        }
+
+        if (element is System.Windows.Controls.MenuItem menuItem)
+        {
+            tile.FreezeOnHide = menuItem.IsChecked;
+        }
+
+        PersistSettings();
+    }
+
     private void RemoveTargetMenuItem_OnClick(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement element || element.DataContext is not TargetTileViewModel tile)
@@ -1640,6 +1690,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         NewGroupButtonText = Localizer.T("Main.NewGroup");
         TargetEnabledText = Localizer.T("Main.TargetEnabled");
         TargetMuteOnHideText = Localizer.T("Main.TargetMuteOnHide");
+        TargetFreezeOnHideText = Localizer.T("Main.TargetFreezeOnHide");
         RenameGroupText = Localizer.T("Main.GroupRename");
         DeleteGroupText = Localizer.T("Main.GroupDelete");
         ToggleGroupText = Localizer.T("Main.GroupToggle");
@@ -1661,7 +1712,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         UpdateLogPanelState();
         BuildTrayMenu();
     }
-
     private void ToggleWindowState()
     {
         WindowState = WindowState == WindowState.Maximized
@@ -2162,6 +2212,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 }
+
 
 
 

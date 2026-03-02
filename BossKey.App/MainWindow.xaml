@@ -1,4 +1,4 @@
-<Window x:Class="BossKey.App.MainWindow"
+﻿<Window x:Class="BossKey.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -598,6 +598,10 @@
                                                                               IsChecked="{Binding MuteOnHide, Mode=TwoWay}"
                                                                               Header="{Binding PlacementTarget.Tag.TargetMuteOnHideText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                               Click="ToggleTargetMuteMenuItem_OnClick" />
+                                                                    <MenuItem IsCheckable="True"
+                                                                              IsChecked="{Binding FreezeOnHide, Mode=TwoWay}"
+                                                                              Header="{Binding PlacementTarget.Tag.TargetFreezeOnHideText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                              Click="ToggleTargetFreezeMenuItem_OnClick" />
                                                                     <Separator />
                                                                     <MenuItem Header="{Binding PlacementTarget.Tag.RemoveButtonText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                               Click="RemoveTargetMenuItem_OnClick" />
@@ -627,26 +631,38 @@
                                                                                VerticalAlignment="Center"
                                                                                HorizontalAlignment="Center" />
                                                                     </Border>
-                                                                    <Border x:Name="UngroupedMuteBadge"
-                                                                            Width="24"
+                                                                    <Border x:Name="UngroupedStatusBadge"
+                                                                            Width="42"
                                                                             Height="24"
-                                                                            Margin="0,-12,-12,0"
+                                                                            Margin="0,-12,-21,0"
                                                                             HorizontalAlignment="Right"
                                                                             VerticalAlignment="Top"
                                                                             Panel.ZIndex="2"
                                                                             CornerRadius="12"
-                                                                            Background="#FFFEE2E2"
+                                                                            Background="#FFF8FAFD"
                                                                             BorderThickness="1"
-                                                                            BorderBrush="#FFFECACA"
+                                                                            BorderBrush="#FFD8E3F0"
                                                                             Visibility="Collapsed">
-                                                                        <Grid>
-                                                                            <TextBlock Text="&#x1F507;"
+                                                                        <StackPanel Orientation="Horizontal"
+                                                                                    HorizontalAlignment="Center"
+                                                                                    VerticalAlignment="Center">
+                                                                            <TextBlock x:Name="UngroupedMuteGlyph"
+                                                                                       Text="&#x1F507;"
                                                                                        FontFamily="Segoe UI Emoji"
-                                                                                       FontSize="14"
+                                                                                       FontSize="11"
+                                                                                       Visibility="Collapsed"
                                                                                        HorizontalAlignment="Center"
                                                                                        VerticalAlignment="Center"
                                                                                        TextAlignment="Center" />
-                                                                        </Grid>
+                                                                            <TextBlock x:Name="UngroupedFreezeGlyph"
+                                                                                       Text="&#x2744;&#xFE0F;"
+                                                                                       FontFamily="Segoe UI Emoji"
+                                                                                       FontSize="11"
+                                                                                       Visibility="Collapsed"
+                                                                                       HorizontalAlignment="Center"
+                                                                                       VerticalAlignment="Center"
+                                                                                       TextAlignment="Center" />
+                                                                        </StackPanel>
                                                                     </Border>
                                                                 </Grid>
 
@@ -671,7 +687,12 @@
                                                                 <Setter TargetName="UngroupedProcessNameTextBlock" Property="Foreground" Value="#94A3B8" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding MuteOnHide}" Value="True">
-                                                                <Setter TargetName="UngroupedMuteBadge" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="UngroupedStatusBadge" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="UngroupedMuteGlyph" Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding FreezeOnHide}" Value="True">
+                                                                <Setter TargetName="UngroupedStatusBadge" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="UngroupedFreezeGlyph" Property="Visibility" Value="Visible" />
                                                             </DataTrigger>
                                                         </DataTemplate.Triggers>
                                                     </DataTemplate>
@@ -874,6 +895,10 @@
                                                                                                   IsChecked="{Binding MuteOnHide, Mode=TwoWay}"
                                                                                                   Header="{Binding PlacementTarget.Tag.TargetMuteOnHideText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                                                   Click="ToggleTargetMuteMenuItem_OnClick" />
+                                                                                        <MenuItem IsCheckable="True"
+                                                                                                  IsChecked="{Binding FreezeOnHide, Mode=TwoWay}"
+                                                                                                  Header="{Binding PlacementTarget.Tag.TargetFreezeOnHideText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                                                  Click="ToggleTargetFreezeMenuItem_OnClick" />
                                                                                         <Separator />
                                                                                         <MenuItem Header="{Binding PlacementTarget.Tag.RemoveButtonText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                                                   Click="RemoveTargetMenuItem_OnClick" />
@@ -903,26 +928,38 @@
                                                                                                    VerticalAlignment="Center"
                                                                                                    HorizontalAlignment="Center" />
                                                                                         </Border>
-                                                                                        <Border x:Name="MuteBadge"
-                                                                                                Width="24"
+                                                                                        <Border x:Name="StatusBadge"
+                                                                                                Width="42"
                                                                                                 Height="24"
-                                                                                                Margin="0,-12,-12,0"
+                                                                                                Margin="0,-12,-21,0"
                                                                                                 HorizontalAlignment="Right"
                                                                                                 VerticalAlignment="Top"
                                                                                                 Panel.ZIndex="2"
                                                                                                 CornerRadius="12"
-                                                                                                Background="#FFFEE2E2"
+                                                                                                Background="#FFF8FAFD"
                                                                                                 BorderThickness="1"
-                                                                                                BorderBrush="#FFFECACA"
+                                                                                                BorderBrush="#FFD8E3F0"
                                                                                                 Visibility="Collapsed">
-                                                                                            <Grid>
-                                                                                                <TextBlock Text="&#x1F507;"
+                                                                                            <StackPanel Orientation="Horizontal"
+                                                                                                        HorizontalAlignment="Center"
+                                                                                                        VerticalAlignment="Center">
+                                                                                                <TextBlock x:Name="MuteGlyph"
+                                                                                                           Text="&#x1F507;"
                                                                                                            FontFamily="Segoe UI Emoji"
-                                                                                                           FontSize="14"
+                                                                                                           FontSize="11"
+                                                                                                           Visibility="Collapsed"
                                                                                                            HorizontalAlignment="Center"
                                                                                                            VerticalAlignment="Center"
                                                                                                            TextAlignment="Center" />
-                                                                                            </Grid>
+                                                                                                <TextBlock x:Name="FreezeGlyph"
+                                                                                                           Text="&#x2744;&#xFE0F;"
+                                                                                                           FontFamily="Segoe UI Emoji"
+                                                                                                           FontSize="11"
+                                                                                                           Visibility="Collapsed"
+                                                                                                           HorizontalAlignment="Center"
+                                                                                                           VerticalAlignment="Center"
+                                                                                                           TextAlignment="Center" />
+                                                                                            </StackPanel>
                                                                                         </Border>
                                                                                     </Grid>
 
@@ -947,7 +984,12 @@
                                                                                     <Setter TargetName="GroupProcessNameTextBlock" Property="Foreground" Value="#94A3B8" />
                                                                                 </DataTrigger>
                                                                                 <DataTrigger Binding="{Binding MuteOnHide}" Value="True">
-                                                                                    <Setter TargetName="MuteBadge" Property="Visibility" Value="Visible" />
+                                                                                    <Setter TargetName="StatusBadge" Property="Visibility" Value="Visible" />
+                                                                                    <Setter TargetName="MuteGlyph" Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding FreezeOnHide}" Value="True">
+                                                                                    <Setter TargetName="StatusBadge" Property="Visibility" Value="Visible" />
+                                                                                    <Setter TargetName="FreezeGlyph" Property="Visibility" Value="Visible" />
                                                                                 </DataTrigger>
                                                                             </DataTemplate.Triggers>
                                                                         </DataTemplate>
@@ -1178,5 +1220,7 @@
         </Grid>
     </Grid>
 </Window>
+
+
 
 

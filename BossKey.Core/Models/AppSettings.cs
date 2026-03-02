@@ -7,6 +7,7 @@ public sealed class AppSettings
     public List<TargetAppConfig> Targets { get; set; } = [];
     public List<TargetGroupConfig> Groups { get; set; } = [];
     public bool StartWithWindows { get; set; }
+    public bool RunAsAdministrator { get; set; }
     public bool MinimizeToTray { get; set; } = true;
     public bool AutoCheckForUpdates { get; set; } = true;
     public DateTime? LastUpdateCheckUtc { get; set; }

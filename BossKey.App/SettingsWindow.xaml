@@ -575,6 +575,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220" />
@@ -586,7 +587,6 @@
                                        FontSize="14"
                                        FontWeight="SemiBold"
                                        Foreground="#334155" />
-
                             <CheckBox x:Name="StartWithWindowsCheckBox"
                                       Grid.Row="1"
                                       Grid.ColumnSpan="2"
@@ -599,7 +599,13 @@
                                       Margin="0,10,0,0"
                                       Style="{StaticResource FlatLabeledCheckBoxStyle}" />
 
-                            <StackPanel Grid.Row="3"
+                            <CheckBox x:Name="RunAsAdministratorCheckBox"
+                                      Grid.Row="3"
+                                      Grid.ColumnSpan="2"
+                                      Margin="0,10,0,0"
+                                      Style="{StaticResource FlatLabeledCheckBoxStyle}" />
+
+                            <StackPanel Grid.Row="4"
                                         Grid.ColumnSpan="2"
                                         Orientation="Horizontal"
                                         Margin="0,10,0,0">
@@ -621,13 +627,13 @@
                             </StackPanel>
 
                             <TextBlock x:Name="LanguageLabel"
-                                       Grid.Row="4"
+                                       Grid.Row="5"
                                        VerticalAlignment="Center"
                                        Margin="0,16,0,0"
                                        FontSize="13"
                                        Foreground="#4A5560" />
                             <ComboBox x:Name="LanguageComboBox"
-                                      Grid.Row="4"
+                                      Grid.Row="5"
                                       Grid.Column="1"
                                       Margin="0,16,0,0"
                                       Height="40"
