@@ -260,6 +260,7 @@ public partial class SettingsWindow : Window
         var previousLanguage = _workingCopy.Language;
         var previousPreviewLanguage = _previewLanguage;
         var selectedLanguage = Localizer.NormalizeStoredLanguage(option.Code);
+        _workingCopy.Language = selectedLanguage;
 
         if (!Localizer.HasLanguage(selectedLanguage))
         {
