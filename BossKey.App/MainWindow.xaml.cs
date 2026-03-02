@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -1768,29 +1768,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    internal Task CheckForUpdatesFromSettingsAsync(Window owner)
+    internal Task<bool> CheckForUpdatesFromSettingsAsync(Window owner)
     {
         return CheckForUpdatesAsync(manualCheck: true, owner);
     }
 
-    private async Task CheckForUpdatesAsync(bool manualCheck, Window? dialogOwner = null)
+    private async Task<bool> CheckForUpdatesAsync(bool manualCheck, Window? dialogOwner = null)
     {
         if (_isCheckingUpdates)
         {
-            return;
+            return false;
         }
 
         if (!manualCheck)
         {
             if (!_settings.AutoCheckForUpdates)
             {
-                return;
+                return false;
             }
 
             if (_settings.LastUpdateCheckUtc is DateTime lastCheckUtc
                 && DateTime.UtcNow - lastCheckUtc < AutoUpdateCheckInterval)
             {
-                return;
+                return false;
             }
         }
 
@@ -1829,7 +1829,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         MessageBoxImage.Information);
                 }
 
-                return;
+                return false;
             }
 
             if (result.Status == UpdateCheckStatus.Failed)
@@ -1846,7 +1846,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         MessageBoxImage.Warning);
                 }
 
-                return;
+                return false;
             }
 
             SetStatus(Localizer.Format("Update.StatusAvailable", result.LatestVersion));
@@ -1874,7 +1874,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 MessageBoxImage.Information);
             if (choice != MessageBoxResult.Yes)
             {
-                return;
+                return false;
             }
 
             if (string.IsNullOrWhiteSpace(result.InstallerDownloadUrl))
@@ -1883,7 +1883,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 {
                     Process.Start(new ProcessStartInfo(result.ReleasePageUrl) { UseShellExecute = true });
                     SetStatus(Localizer.T("Update.StatusOpenedReleasePage"));
-                    return;
+                    return false;
                 }
 
                 System.Windows.MessageBox.Show(
@@ -1892,11 +1892,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     Localizer.T("Update.CheckFailedTitle"),
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
-                return;
+                return false;
             }
 
             try
             {
+                if (dialogOwner is not null && dialogOwner != this)
+                {
+                    dialogOwner.Close();
+                }
+
                 SetStatus(Localizer.T("Update.StatusDownloading"));
                 ShowUpdateDownloadOverlay();
                 var progress = new Progress<double>(UpdateDownloadProgress);
@@ -1907,13 +1912,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     SetStatus(Localizer.T("Update.StatusApplyingSingleFile"));
                     _allowClose = true;
                     Close();
-                    return;
+                    return true;
                 }
 
                 Process.Start(new ProcessStartInfo(installerPath) { UseShellExecute = true });
                 SetStatus(Localizer.T("Update.StatusStartingInstaller"));
                 _allowClose = true;
                 Close();
+                return true;
             }
             catch (Exception ex)
             {
@@ -1925,6 +1931,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     Localizer.T("Update.CheckFailedTitle"),
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
+                return false;
             }
         }
         finally
@@ -2225,8 +2232,3 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 }
-
-
-
-
-

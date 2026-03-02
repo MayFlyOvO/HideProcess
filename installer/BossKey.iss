@@ -1,9 +1,9 @@
-﻿#define MyAppName "BossKey"
+#define MyAppName "BossKey"
 #define MyAppPublisher "BossKey"
 #define MyAppExeName "BossKey.App.exe"
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.3.1"
+  #define MyAppVersion "1.3.2"
 #endif
 
 #ifndef OutputBaseName
@@ -63,6 +63,3 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-
-
-

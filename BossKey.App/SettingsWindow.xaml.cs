@@ -221,7 +221,12 @@ public partial class SettingsWindow : Window
     {
         if (Owner is MainWindow mainWindow)
         {
-            await mainWindow.CheckForUpdatesFromSettingsAsync(this);
+            var shouldClose = await mainWindow.CheckForUpdatesFromSettingsAsync(this);
+            if (shouldClose && IsLoaded)
+            {
+                Close();
+            }
+
             return;
         }
 
