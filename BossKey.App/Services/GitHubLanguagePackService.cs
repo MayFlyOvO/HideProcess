@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.IO;
@@ -30,43 +31,42 @@ public sealed class GitHubLanguagePackService
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
     }
 
-    public async Task<LanguageSyncResult> SyncAsync(string targetDirectory, CancellationToken cancellationToken = default)
+    public Task<LanguageManifest> FetchCatalogAsync(CancellationToken cancellationToken = default)
     {
-        var manifest = await FetchManifestAsync(cancellationToken).ConfigureAwait(false);
+        return FetchManifestAsync(cancellationToken);
+    }
+
+    public async Task<bool> DownloadLanguageIfNeededAsync(
+        LanguageManifestEntry entry,
+        string targetDirectory,
+        CancellationToken cancellationToken = default)
+    {
         Directory.CreateDirectory(targetDirectory);
-
-        var downloadedLanguageCodes = new List<string>();
-        foreach (var entry in manifest.Languages)
+        if (string.IsNullOrWhiteSpace(entry.Code)
+            || string.IsNullOrWhiteSpace(entry.RelativePath)
+            || string.Equals(entry.Code, Localizer.DefaultLanguageCode, StringComparison.OrdinalIgnoreCase))
         {
-            if (string.IsNullOrWhiteSpace(entry.Code)
-                || string.IsNullOrWhiteSpace(entry.Version)
-                || string.IsNullOrWhiteSpace(entry.RelativePath)
-                || string.Equals(entry.Code, Localizer.DefaultLanguageCode, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            var localPath = Path.Combine(targetDirectory, $"{SanitizeFileName(entry.Code)}.json");
-            if (!IsDownloadRequired(localPath, entry.Version))
-            {
-                continue;
-            }
-
-            var packJson = await DownloadLanguagePackJsonAsync(entry, cancellationToken).ConfigureAwait(false);
-            var pack = JsonSerializer.Deserialize<LanguagePack>(packJson, _jsonSerializerOptions)
-                ?? throw new InvalidDataException($"Language pack '{entry.Code}' is invalid.");
-            if (!string.Equals(pack.Code, entry.Code, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidDataException($"Language pack code mismatch for '{entry.Code}'.");
-            }
-
-            var tempPath = $"{localPath}.{Guid.NewGuid():N}.tmp";
-            File.WriteAllText(tempPath, packJson);
-            File.Move(tempPath, localPath, overwrite: true);
-            downloadedLanguageCodes.Add(entry.Code);
+            return false;
         }
 
-        return LanguageSyncResult.Success(manifest, downloadedLanguageCodes);
+        var localPath = Path.Combine(targetDirectory, $"{SanitizeFileName(entry.Code)}.json");
+        if (!IsDownloadRequired(localPath, entry.Version))
+        {
+            return false;
+        }
+
+        var packJson = await DownloadLanguagePackJsonAsync(entry, cancellationToken).ConfigureAwait(false);
+        var pack = JsonSerializer.Deserialize<LanguagePack>(packJson, _jsonSerializerOptions)
+            ?? throw new InvalidDataException($"Language pack '{entry.Code}' is invalid.");
+        if (!string.Equals(pack.Code, entry.Code, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException($"Language pack code mismatch for '{entry.Code}'.");
+        }
+
+        var tempPath = $"{localPath}.{Guid.NewGuid():N}.tmp";
+        File.WriteAllText(tempPath, packJson);
+        File.Move(tempPath, localPath, overwrite: true);
+        return true;
     }
 
     private async Task<LanguageManifest> FetchManifestAsync(CancellationToken cancellationToken)
@@ -107,35 +107,22 @@ public sealed class GitHubLanguagePackService
                      && item.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
                      && !string.Equals(item.Name, "manifest.json", StringComparison.OrdinalIgnoreCase)))
         {
-            var downloadUrl = !string.IsNullOrWhiteSpace(item.DownloadUrl)
-                ? item.DownloadUrl
-                : BuildRawUrl(item.Name);
-            var packJson = await DownloadStringAsync(downloadUrl, allowNotFound: true, cancellationToken).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(packJson))
+            var code = Path.GetFileNameWithoutExtension(item.Name);
+            if (string.IsNullOrWhiteSpace(code))
             {
                 continue;
             }
 
-            try
+            manifest.Languages.Add(new LanguageManifestEntry
             {
-                var pack = JsonSerializer.Deserialize<LanguagePack>(packJson, _jsonSerializerOptions);
-                if (pack is null || string.IsNullOrWhiteSpace(pack.Code))
-                {
-                    continue;
-                }
-
-                manifest.Languages.Add(new LanguageManifestEntry
-                {
-                    Code = pack.Code,
-                    DisplayName = string.IsNullOrWhiteSpace(pack.DisplayName) ? pack.Code : pack.DisplayName,
-                    Version = string.IsNullOrWhiteSpace(pack.Version) ? "1.0.0" : pack.Version,
-                    RelativePath = item.Name,
-                    DownloadUrl = downloadUrl
-                });
-            }
-            catch
-            {
-            }
+                Code = code,
+                DisplayName = GetFallbackDisplayName(code),
+                Version = string.Empty,
+                RelativePath = item.Name,
+                DownloadUrl = !string.IsNullOrWhiteSpace(item.DownloadUrl)
+                    ? item.DownloadUrl
+                    : BuildRawUrl(item.Name)
+            });
         }
 
         return manifest;
@@ -187,6 +174,11 @@ public sealed class GitHubLanguagePackService
             return true;
         }
 
+        if (string.IsNullOrWhiteSpace(remoteVersion))
+        {
+            return false;
+        }
+
         try
         {
             var json = File.ReadAllText(localPath);
@@ -214,6 +206,18 @@ public sealed class GitHubLanguagePackService
     {
         var invalidChars = Path.GetInvalidFileNameChars();
         return new string(value.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
+    }
+
+    private static string GetFallbackDisplayName(string languageCode)
+    {
+        try
+        {
+            return CultureInfo.GetCultureInfo(languageCode).NativeName;
+        }
+        catch
+        {
+            return languageCode;
+        }
     }
 
     private sealed class GitHubContentItem

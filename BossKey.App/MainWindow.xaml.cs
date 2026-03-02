@@ -388,7 +388,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     MessageBoxImage.Warning);
             }
 
-            _ = SyncLanguagePacksInBackgroundAsync();
+            _ = RefreshLanguageCatalogInBackgroundAsync();
             _ = CheckForUpdatesAsync(manualCheck: false);
         }
         catch (Exception ex)
@@ -1745,9 +1745,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         AppendLog(message);
     }
 
-    private async Task SyncLanguagePacksInBackgroundAsync()
+    private async Task RefreshLanguageCatalogInBackgroundAsync()
     {
-        await Localizer.SyncLanguagePacksAsync();
+        await Localizer.RefreshRemoteCatalogAsync();
     }
 
     private void UpdateLogPanelState()

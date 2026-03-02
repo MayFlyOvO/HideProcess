@@ -27,6 +27,7 @@ public partial class SettingsWindow : Window
     private string _previewLanguage;
     private string? _selectedGroupHotkeyId;
     private bool _isSyncingLanguages;
+    private bool _isRefreshingLanguageOptions;
 
     public AppSettings UpdatedSettings { get; }
 
@@ -249,14 +250,48 @@ public partial class SettingsWindow : Window
         dialog.ShowDialog();
     }
 
-    private void LanguageComboBox_OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private async void LanguageComboBox_OnSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (LanguageComboBox.SelectedItem is not LanguageOption option)
+        if (_isRefreshingLanguageOptions || LanguageComboBox.SelectedItem is not LanguageOption option)
         {
             return;
         }
 
-        _workingCopy.Language = Localizer.NormalizeStoredLanguage(option.Code);
+        var previousLanguage = _workingCopy.Language;
+        var previousPreviewLanguage = _previewLanguage;
+        var selectedLanguage = Localizer.NormalizeStoredLanguage(option.Code);
+
+        if (!Localizer.HasLanguage(selectedLanguage))
+        {
+            SetLanguageControlsBusy(true);
+            try
+            {
+                var result = await Localizer.EnsureLanguageAvailableAsync(selectedLanguage);
+                if (!result.Succeeded || !Localizer.HasLanguage(selectedLanguage))
+                {
+                    _workingCopy.Language = previousLanguage;
+                    _previewLanguage = previousPreviewLanguage;
+                    RefreshLanguageOptions();
+                    ApplyLocalization();
+                    UpdateHotkeyConflictWarning();
+                    System.Windows.MessageBox.Show(
+                        this,
+                        string.Format(
+                            Localizer.T("Settings.DownloadLanguageFailed", previousPreviewLanguage),
+                            result.ErrorMessage ?? "Unknown error."),
+                        Localizer.T("Main.InitErrorTitle", previousPreviewLanguage),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+            }
+            finally
+            {
+                SetLanguageControlsBusy(false);
+            }
+        }
+
+        _workingCopy.Language = selectedLanguage;
         _previewLanguage = Localizer.NormalizeLanguage(_workingCopy.Language);
         RefreshGroupHotkeyOptions();
         ApplyLocalization();
@@ -271,10 +306,10 @@ public partial class SettingsWindow : Window
         }
 
         _isSyncingLanguages = true;
-        SyncLanguagesButton.IsEnabled = false;
+        SetLanguageControlsBusy(true);
         try
         {
-            var result = await Localizer.SyncLanguagePacksAsync();
+            var result = await Localizer.RefreshRemoteCatalogAsync();
             _previewLanguage = Localizer.NormalizeLanguage(_workingCopy.Language);
             RefreshLanguageOptions();
             ApplyLocalization();
@@ -303,7 +338,7 @@ public partial class SettingsWindow : Window
         finally
         {
             _isSyncingLanguages = false;
-            SyncLanguagesButton.IsEnabled = true;
+            SetLanguageControlsBusy(false);
         }
     }
 
@@ -382,7 +417,8 @@ public partial class SettingsWindow : Window
         StartWithWindowsCheckBox.Content = Localizer.T("Settings.StartWithWindows", _previewLanguage);
         RunAsAdministratorCheckBox.Content = Localizer.T("Settings.RunAsAdministrator", _previewLanguage);
         MinimizeToTrayCheckBox.Content = Localizer.T("Settings.MinimizeToTray", _previewLanguage);
-        AutoCheckUpdatesCheckBox.Content = Localizer.T("Settings.AutoCheckUpdates", _previewLanguage);
+        AutoCheckUpdatesLabelTextBlock.Text = Localizer.T("Settings.AutoCheckUpdates", _previewLanguage);
+        AutoCheckUpdatesCheckBox.Content = string.Empty;
         LanguageLabel.Text = Localizer.T("Settings.Language", _previewLanguage);
         ImportButtonTextBlock.Text = Localizer.T("Settings.Import", _previewLanguage);
         ExportButtonTextBlock.Text = Localizer.T("Settings.Export", _previewLanguage);
@@ -482,12 +518,26 @@ public partial class SettingsWindow : Window
     private void RefreshLanguageOptions()
     {
         var options = Localizer.GetSupportedLanguages(_workingCopy.Language);
-        LanguageComboBox.ItemsSource = options;
-        LanguageComboBox.SelectedItem = options.FirstOrDefault(option =>
-                                       string.Equals(option.Code, _workingCopy.Language, StringComparison.OrdinalIgnoreCase))
-                                   ?? options.FirstOrDefault(option =>
-                                       string.Equals(option.Code, _previewLanguage, StringComparison.OrdinalIgnoreCase))
-                                   ?? options.FirstOrDefault();
+        _isRefreshingLanguageOptions = true;
+        try
+        {
+            LanguageComboBox.ItemsSource = options;
+            LanguageComboBox.SelectedItem = options.FirstOrDefault(option =>
+                                           string.Equals(option.Code, _workingCopy.Language, StringComparison.OrdinalIgnoreCase))
+                                       ?? options.FirstOrDefault(option =>
+                                           string.Equals(option.Code, _previewLanguage, StringComparison.OrdinalIgnoreCase))
+                                       ?? options.FirstOrDefault();
+        }
+        finally
+        {
+            _isRefreshingLanguageOptions = false;
+        }
+    }
+
+    private void SetLanguageControlsBusy(bool isBusy)
+    {
+        LanguageComboBox.IsEnabled = !isBusy;
+        SyncLanguagesButton.IsEnabled = !isBusy;
     }
 
     private void RefreshGroupHotkeyOptions()

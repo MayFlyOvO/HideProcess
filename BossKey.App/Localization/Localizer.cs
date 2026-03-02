@@ -139,58 +139,84 @@ public static class Localizer
         return string.Format(CultureInfo.CurrentCulture, T(key), args);
     }
 
-    public static async Task<LanguageSyncResult> SyncLanguagePacksAsync(CancellationToken cancellationToken = default)
+    public static Task<LanguageSyncResult> SyncLanguagePacksAsync(CancellationToken cancellationToken = default)
+    {
+        return RefreshRemoteCatalogAsync(cancellationToken);
+    }
+
+    public static async Task<LanguageSyncResult> RefreshRemoteCatalogAsync(CancellationToken cancellationToken = default)
     {
         EnsureInitialized();
         await RemoteSyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var result = await RemoteLanguageService.SyncAsync(GetLanguageDirectoryPath(), cancellationToken).ConfigureAwait(false);
-            if (!result.Succeeded)
-            {
-                return result;
-            }
+            var manifest = await RemoteLanguageService.FetchCatalogAsync(cancellationToken).ConfigureAwait(false);
+            return ApplyRemoteCatalogUpdate(manifest, Array.Empty<string>());
+        }
+        catch (Exception ex)
+        {
+            return LanguageSyncResult.Failed(ex.Message);
+        }
+        finally
+        {
+            RemoteSyncSemaphore.Release();
+        }
+    }
 
-            var shouldRaiseSupportedLanguagesChanged = false;
-            var shouldRaiseLanguageChanged = false;
+    public static async Task<LanguageSyncResult> EnsureLanguageAvailableAsync(
+        string? languageCode,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureInitialized();
+
+        var normalizedCode = NormalizeStoredLanguage(languageCode);
+        if (string.Equals(normalizedCode, DefaultLanguage, StringComparison.OrdinalIgnoreCase))
+        {
+            return LanguageSyncResult.Success(new LanguageManifest(), Array.Empty<string>());
+        }
+
+        await RemoteSyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            LanguageManifest manifest;
+            LanguageManifestEntry? remoteEntry;
 
             lock (Gate)
             {
-                var supportedBefore = BuildLanguageCodeSnapshotNoLock();
-                var currentBefore = _currentLanguage;
-
-                _remoteCatalog = result.Manifest.Languages
-                    .Where(static entry => !string.IsNullOrWhiteSpace(entry.Code))
-                    .GroupBy(static entry => entry.Code, StringComparer.OrdinalIgnoreCase)
-                    .ToDictionary(
-                        static group => group.First().Code,
-                        static group => group.Last(),
-                        StringComparer.OrdinalIgnoreCase);
-
-                ReloadInstalledPacksNoLock();
-                var currentAfter = ResolveLanguageNoLock(_requestedLanguage);
-                _currentLanguage = currentAfter;
-
-                var supportedAfter = BuildLanguageCodeSnapshotNoLock();
-                shouldRaiseSupportedLanguagesChanged = !string.Equals(supportedBefore, supportedAfter, StringComparison.Ordinal);
-                shouldRaiseLanguageChanged =
-                    !string.Equals(currentBefore, currentAfter, StringComparison.OrdinalIgnoreCase)
-                    || result.DownloadedLanguageCodes.Any(code =>
-                        string.Equals(code, currentBefore, StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(code, currentAfter, StringComparison.OrdinalIgnoreCase));
+                manifest = new LanguageManifest
+                {
+                    Languages = _remoteCatalog.Values.ToList()
+                };
+                remoteEntry = _remoteCatalog.Values.FirstOrDefault(entry =>
+                    string.Equals(entry.Code, normalizedCode, StringComparison.OrdinalIgnoreCase));
             }
 
-            if (shouldRaiseSupportedLanguagesChanged)
+            if (remoteEntry is null)
             {
-                SupportedLanguagesChanged?.Invoke(null, EventArgs.Empty);
+                manifest = await RemoteLanguageService.FetchCatalogAsync(cancellationToken).ConfigureAwait(false);
+                ApplyRemoteCatalogUpdate(manifest, Array.Empty<string>());
+                lock (Gate)
+                {
+                    remoteEntry = _remoteCatalog.Values.FirstOrDefault(entry =>
+                        string.Equals(entry.Code, normalizedCode, StringComparison.OrdinalIgnoreCase));
+                }
             }
 
-            if (shouldRaiseLanguageChanged)
+            if (remoteEntry is null)
             {
-                LanguageChanged?.Invoke(null, EventArgs.Empty);
+                return HasLanguage(normalizedCode)
+                    ? LanguageSyncResult.Success(manifest, Array.Empty<string>())
+                    : LanguageSyncResult.Failed($"Language '{normalizedCode}' was not found.");
             }
 
-            return result;
+            var downloaded = await RemoteLanguageService.DownloadLanguageIfNeededAsync(
+                remoteEntry,
+                GetLanguageDirectoryPath(),
+                cancellationToken).ConfigureAwait(false);
+
+            return ApplyRemoteCatalogUpdate(
+                manifest,
+                downloaded ? new[] { normalizedCode } : Array.Empty<string>());
         }
         catch (Exception ex)
         {
@@ -409,5 +435,52 @@ public static class Localizer
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "BossKey");
         return Path.Combine(appDataDirectory, "Languages");
+    }
+
+    private static LanguageSyncResult ApplyRemoteCatalogUpdate(
+        LanguageManifest manifest,
+        IReadOnlyList<string> downloadedLanguageCodes)
+    {
+        var shouldRaiseSupportedLanguagesChanged = false;
+        var shouldRaiseLanguageChanged = false;
+
+        lock (Gate)
+        {
+            var supportedBefore = BuildLanguageCodeSnapshotNoLock();
+            var currentBefore = _currentLanguage;
+
+            _remoteCatalog = manifest.Languages
+                .Where(static entry => !string.IsNullOrWhiteSpace(entry.Code))
+                .GroupBy(static entry => entry.Code, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    static group => group.First().Code,
+                    static group => group.Last(),
+                    StringComparer.OrdinalIgnoreCase);
+
+            ReloadInstalledPacksNoLock();
+            var currentAfter = ResolveLanguageNoLock(_requestedLanguage);
+            _currentLanguage = currentAfter;
+
+            var supportedAfter = BuildLanguageCodeSnapshotNoLock();
+            shouldRaiseSupportedLanguagesChanged = !string.Equals(supportedBefore, supportedAfter, StringComparison.Ordinal);
+            shouldRaiseLanguageChanged =
+                !string.Equals(currentBefore, currentAfter, StringComparison.OrdinalIgnoreCase)
+                || downloadedLanguageCodes.Any(code =>
+                    string.Equals(code, currentBefore, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(code, currentAfter, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(code, _requestedLanguage, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (shouldRaiseSupportedLanguagesChanged)
+        {
+            SupportedLanguagesChanged?.Invoke(null, EventArgs.Empty);
+        }
+
+        if (shouldRaiseLanguageChanged)
+        {
+            LanguageChanged?.Invoke(null, EventArgs.Empty);
+        }
+
+        return LanguageSyncResult.Success(manifest, downloadedLanguageCodes);
     }
 }
