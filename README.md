@@ -1,86 +1,88 @@
-﻿# BossKey
+# BossKey
 
-`BossKey` 是一个面向 Windows 的老板键工具，用于快速隐藏、恢复和管理指定程序窗口。它支持全局热键、分组热键、窗口拾取、托盘运行、自动更新，以及按目标分别控制静音和冻结行为。
+English | [简体中文](README.zh-CN.md) | [日本語](README.ja-JP.md)
 
-## 主要功能
+BossKey is a Windows desktop utility for quickly hiding, restoring, and organizing selected application windows. It is built for fast “boss key” workflows, but it is also useful as a lightweight window control tool for daily work setups.
 
-- 支持为任意已选程序一键隐藏和恢复窗口
-- 支持全局热键与分组热键，并支持相同按键作为 `Toggle`
-- 支持三键及以上组合键，如 `Ctrl + Shift + X`
-- 支持直接从运行中窗口或窗口拾取模式添加目标
-- 支持目标分组、拖拽分组、折叠分组、重命名分组
-- 支持按程序卡片展示图标和名称，右键可直接设置启用、隐藏时静音、隐藏时冻结
-- 支持隐藏时同时静音目标程序
-- 支持隐藏时冻结目标进程，恢复时自动解冻
-- 支持可选的“以管理员身份运行”，用于提升冻结高权限进程的成功率
-- 支持开机启动、关闭时最小化到托盘、运行日志、单实例运行
-- 支持导入 / 导出配置
-- 支持自动检查更新与手动检查更新
-- 支持简体中文 / English
+## Features
 
-## 分组与热键
+- Hide or restore all selected targets instantly.
+- Configure global hotkeys and per-group hotkeys.
+- Use keyboard-only hotkeys or keyboard + mouse button combinations such as `Ctrl + Alt + Mouse Middle`.
+- Allow the same hide/show hotkey to act as a toggle.
+- Add targets from the running window list or by using the window picker.
+- Organize targets into groups, rename groups, collapse groups, and drag targets between groups.
+- Configure per-target behaviors from the context menu:
+  - mute on hide
+  - freeze on hide
+  - topmost on show
+  - center on cursor on show
+  - enable or disable a target
+- Run in the tray, start with Windows, minimize to tray on close, and keep a runtime log.
+- Import and export settings.
+- Check for app updates manually or automatically.
+- Use JSON-based language packs:
+  - English is built in
+  - additional languages can be fetched from GitHub and updated locally
+- Customize the UI with a built-in theme system:
+  - default light and dark themes
+  - live theme preview
+  - custom color editor
+  - themed message boxes and dialogs
 
-- 已选目标可放在任意分组中，也可保持未分组状态
-- 每个分组可在设置页单独配置隐藏 / 显示热键
-- 全局热键作用于全部已添加目标
-- 全局热键允许留空，只使用分组热键
-- 分组变化时，如果相关目标当前处于隐藏状态，程序会先恢复它们，避免丢失恢复入口
+## Language Packs
 
-## 使用方式
+- Built-in language: English
+- Remote language packs currently included in this repository: Simplified Chinese and Japanese
+- Installed language packs are stored in:
+  - `%APPDATA%\\BossKey\\Languages`
+- Main settings are stored in:
+  - `%APPDATA%\\BossKey\\settings.json`
+- When the app checks for updates, it can also refresh installed language packs if newer versions are available.
 
-1. 在主界面选择运行中的窗口并添加目标，或使用“窗口选择”直接点选目标窗口
-2. 按需要将目标拖入分组
-3. 在设置页配置全局热键、分组热键及其他选项
-4. 触发隐藏热键后，目标窗口会立即隐藏；触发显示热键后恢复
+## Download
 
-## 更新
+Get the latest release from GitHub Releases:
 
-- 程序支持从 GitHub Releases 检查新版本
-- 安装包版会优先下载安装包更新
-- 单文件版会优先下载单文件更新，并在下载完成后替换自身
+- Installer build: recommended for normal use
+- Single-file build: recommended for portable use
 
-## 下载
-
-请从 GitHub Releases 页面获取最新版本：
-
-- 安装包版：适合普通使用
-- 单文件版：适合便携使用
-
-发布页：
+Release page:
 
 - <https://github.com/MayFlyOvO/BossKey/releases>
 
-## 配置文件
-
-程序配置默认保存在：
-
-- `%APPDATA%\BossKey\settings.json`
-
-## 运行环境
+## Requirements
 
 - Windows 10 / 11
 - x64
-- .NET 8（安装包版会随程序发布；如手动编译请先安装 .NET 8 SDK）
+- .NET 8 SDK to build from source
 
-## 本地运行
+## Build From Source
 
 ```powershell
 dotnet build BossKey.sln
 dotnet run --project .\BossKey.App\BossKey.App.csproj
 ```
 
-## 正式构建
+## Release Build
 
 ```bat
 Build-Release.bat
 ```
 
-## 已知限制
+The GitHub Actions workflow builds:
 
-- 某些高权限或受保护进程，即使启用冻结，也可能需要以管理员身份运行程序才能成功挂起
-- 多进程程序的隐藏、静音和冻结效果取决于目标窗口所属进程的实际行为
-- 某些系统窗口、UWP 容器窗口或特殊渲染窗口可能无法完全按普通桌面程序方式恢复
+- a self-contained installer package
+- a self-contained single-file package
+
+## Notes
+
+- Some elevated or protected processes may require BossKey itself to run as administrator for freeze behavior to work reliably.
+- Behavior for multi-process applications depends on which process owns the selected window.
+- Some system windows, UWP container windows, or special-rendered windows may not restore exactly like standard desktop apps.
 
 ## License
 
-本项目使用 [MIT License](LICENSE)。
+BossKey is licensed under the [MIT License](LICENSE).
+
+This repository also bundles Google Material icon font assets that are distributed under Apache 2.0.
