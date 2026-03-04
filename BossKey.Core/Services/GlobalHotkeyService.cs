@@ -33,12 +33,26 @@ public sealed class GlobalHotkeyService : IDisposable
     private NativeMethods.LowLevelMouseProc? _mouseHookProc;
     private IntPtr _keyboardHookHandle;
     private IntPtr _mouseHookHandle;
+    private int _suspensionCount;
     private bool _disposed;
 
     public event EventHandler<HotkeyTriggeredEventArgs>? HotkeyTriggered;
 
     // Default true: once hotkey triggers, swallow the chord so it does not propagate to system/app.
     public bool SuppressTriggeredHotkeys { get; set; } = true;
+
+    public IDisposable Suspend()
+    {
+        ThrowIfDisposed();
+
+        lock (_syncLock)
+        {
+            _suspensionCount++;
+            ResetStateNoLock();
+        }
+
+        return new SuspensionScope(this);
+    }
 
     public void UpdateBindings(HotkeyBinding hideBinding, HotkeyBinding showBinding)
     {
@@ -62,8 +76,7 @@ public sealed class GlobalHotkeyService : IDisposable
                     useToggleMode ? hideKeys : []));
             }
 
-            _pressedKeys.Clear();
-            _activeSuppressedChord.Clear();
+            ResetStateNoLock();
         }
     }
 
@@ -111,14 +124,8 @@ public sealed class GlobalHotkeyService : IDisposable
         _mouseHookProc = null;
         lock (_syncLock)
         {
-            _pressedKeys.Clear();
-            _activeSuppressedChord.Clear();
-            foreach (var route in _routes)
-            {
-                route.HideFired = false;
-                route.ShowFired = false;
-                route.ToggleFired = false;
-            }
+            _suspensionCount = 0;
+            ResetStateNoLock();
         }
     }
 
@@ -181,6 +188,11 @@ public sealed class GlobalHotkeyService : IDisposable
 
         lock (_syncLock)
         {
+            if (_suspensionCount > 0)
+            {
+                return NativeMethods.CallNextHookEx(hookHandle, nCode, wParam, lParam);
+            }
+
             if (isKeyDown)
             {
                 _pressedKeys.Add(key);
@@ -290,6 +302,32 @@ public sealed class GlobalHotkeyService : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
+    private void ResumeSuspension()
+    {
+        lock (_syncLock)
+        {
+            if (_suspensionCount == 0)
+            {
+                return;
+            }
+
+            _suspensionCount--;
+            ResetStateNoLock();
+        }
+    }
+
+    private void ResetStateNoLock()
+    {
+        _pressedKeys.Clear();
+        _activeSuppressedChord.Clear();
+        foreach (var route in _routes)
+        {
+            route.HideFired = false;
+            route.ShowFired = false;
+            route.ToggleFired = false;
+        }
+    }
+
     private sealed class RouteState(
         string routeId,
         HashSet<int> hideKeys,
@@ -321,5 +359,16 @@ public sealed class GlobalHotkeyService : IDisposable
     {
         public RouteState Route { get; } = route;
         public HotkeyAction Action { get; } = action;
+    }
+
+    private sealed class SuspensionScope(GlobalHotkeyService owner) : IDisposable
+    {
+        private GlobalHotkeyService? _owner = owner;
+
+        public void Dispose()
+        {
+            var owner = Interlocked.Exchange(ref _owner, null);
+            owner?.ResumeSuspension();
+        }
     }
 }

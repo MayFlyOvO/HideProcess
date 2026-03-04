@@ -58,7 +58,7 @@ public partial class SettingsWindow : Window
             Owner = this
         };
 
-        if (dialog.ShowDialog() != true)
+        if (!ShowHotkeyCaptureDialog(dialog))
         {
             return;
         }
@@ -79,7 +79,7 @@ public partial class SettingsWindow : Window
             Owner = this
         };
 
-        if (dialog.ShowDialog() != true)
+        if (!ShowHotkeyCaptureDialog(dialog))
         {
             return;
         }
@@ -106,7 +106,7 @@ public partial class SettingsWindow : Window
             Owner = this
         };
 
-        if (dialog.ShowDialog() != true)
+        if (!ShowHotkeyCaptureDialog(dialog))
         {
             return;
         }
@@ -133,7 +133,7 @@ public partial class SettingsWindow : Window
             Owner = this
         };
 
-        if (dialog.ShowDialog() != true)
+        if (!ShowHotkeyCaptureDialog(dialog))
         {
             return;
         }
@@ -395,6 +395,12 @@ public partial class SettingsWindow : Window
     {
         Localizer.SupportedLanguagesChanged -= Localizer_OnSupportedLanguagesChanged;
         Closed -= SettingsWindow_OnClosed;
+    }
+
+    private bool ShowHotkeyCaptureDialog(HotkeyCaptureWindow dialog)
+    {
+        using var hotkeySuspension = (Owner as MainWindow)?.SuspendGlobalHotkeys();
+        return dialog.ShowDialog() == true;
     }
 
     private void ApplyLocalization()

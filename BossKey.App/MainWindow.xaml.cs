@@ -1273,6 +1273,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Owner = this
         };
 
+        using var hotkeySuspension = SuspendGlobalHotkeys();
         if (dialog.ShowDialog() != true)
         {
             return;
@@ -1299,6 +1300,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Owner = this
         };
 
+        using var hotkeySuspension = SuspendGlobalHotkeys();
         if (dialog.ShowDialog() != true)
         {
             return;
@@ -1307,6 +1309,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         group.ShowHotkey = dialog.CapturedBinding;
         _globalHotkeyService.UpdateBindings(BuildHotkeyRoutes());
         PersistSettings();
+    }
+
+    internal IDisposable SuspendGlobalHotkeys()
+    {
+        return _globalHotkeyService.Suspend();
     }
 
     private void TargetTile_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
