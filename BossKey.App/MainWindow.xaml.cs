@@ -1881,6 +1881,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 result = UpdateCheckResult.Failed(ex.Message);
             }
 
+            await Localizer.UpdateInstalledLanguagePacksAsync();
+
             _settings.LastUpdateCheckUtc = DateTime.UtcNow;
             PersistSettings();
 
@@ -1974,7 +1976,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ShowUpdateDownloadOverlay();
                 var progress = new Progress<double>(UpdateDownloadProgress);
                 var installerPath = await _appUpdateService.DownloadInstallerAsync(result.InstallerDownloadUrl, result.ReleaseTag, progress);
-                await Localizer.UpdateInstalledLanguagePacksAsync();
                 if (_currentPackageType == UpdatePackageType.SingleFile)
                 {
                     BeginSingleFileSelfUpdate(installerPath);

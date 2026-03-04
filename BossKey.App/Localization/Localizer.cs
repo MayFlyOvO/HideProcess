@@ -372,7 +372,7 @@ public static class Localizer
                      .OrderBy(static pack => string.Equals(pack.Code, DefaultLanguage, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
                      .ThenBy(static pack => pack.DisplayName, StringComparer.CurrentCultureIgnoreCase))
         {
-            options.Add(new LanguageOption(pack.Code, pack.DisplayName, GetLanguageVersionNoLock(pack.Code)));
+            options.Add(CreateLanguageOptionNoLock(pack.Code, pack.DisplayName));
             seenCodes.Add(pack.Code);
         }
 
@@ -382,17 +382,16 @@ public static class Localizer
         {
             if (seenCodes.Add(entry.Code))
             {
-                options.Add(new LanguageOption(entry.Code, entry.DisplayName, GetLanguageVersionNoLock(entry.Code)));
+                options.Add(CreateLanguageOptionNoLock(entry.Code, entry.DisplayName));
             }
         }
 
         var normalizedIncludedCode = NormalizeStoredLanguageNoLock(includeLanguageCode);
         if (seenCodes.Add(normalizedIncludedCode))
         {
-            options.Add(new LanguageOption(
+            options.Add(CreateLanguageOptionNoLock(
                 normalizedIncludedCode,
-                GetLanguageDisplayNameNoLock(normalizedIncludedCode),
-                GetLanguageVersionNoLock(normalizedIncludedCode)));
+                GetLanguageDisplayNameNoLock(normalizedIncludedCode)));
         }
 
         return options;
@@ -421,14 +420,17 @@ public static class Localizer
         return languageCode;
     }
 
-    private static string GetLanguageVersionNoLock(string languageCode)
+    private static LanguageOption CreateLanguageOptionNoLock(string languageCode, string displayName)
     {
-        if (_remoteCatalog.TryGetValue(languageCode, out var remotePack)
-            && !string.IsNullOrWhiteSpace(remotePack.Version))
-        {
-            return remotePack.Version;
-        }
+        return new LanguageOption(
+            languageCode,
+            displayName,
+            GetInstalledLanguageVersionNoLock(languageCode),
+            GetLatestLanguageVersionNoLock(languageCode));
+    }
 
+    private static string GetInstalledLanguageVersionNoLock(string languageCode)
+    {
         if (_installedPacks.TryGetValue(languageCode, out var installedPack)
             && !string.IsNullOrWhiteSpace(installedPack.Version))
         {
@@ -436,6 +438,33 @@ public static class Localizer
         }
 
         return string.Empty;
+    }
+
+    private static string GetLatestLanguageVersionNoLock(string languageCode)
+    {
+        var installedVersion = GetInstalledLanguageVersionNoLock(languageCode);
+        if (!_remoteCatalog.TryGetValue(languageCode, out var remotePack)
+            || string.IsNullOrWhiteSpace(remotePack.Version))
+        {
+            return installedVersion;
+        }
+
+        if (string.IsNullOrWhiteSpace(installedVersion))
+        {
+            return remotePack.Version;
+        }
+
+        if (Version.TryParse(installedVersion, out var installedParsedVersion)
+            && Version.TryParse(remotePack.Version, out var remoteParsedVersion))
+        {
+            return remoteParsedVersion > installedParsedVersion
+                ? remotePack.Version
+                : installedVersion;
+        }
+
+        return string.Equals(installedVersion, remotePack.Version, StringComparison.OrdinalIgnoreCase)
+            ? installedVersion
+            : remotePack.Version;
     }
 
     private static string ResolveLanguageNoLock(string? languageCode)

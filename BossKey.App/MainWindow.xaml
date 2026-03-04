@@ -620,7 +620,7 @@
                                     Grid.Row="1"
                                     Grid.Column="1"
                                     Margin="0,0,8,0"
-                                    Width="82"
+                                    Width="96"
                                     Height="40"
                                     Style="{StaticResource IconNeutralButtonStyle}"
                                     Click="RefreshTargetsButton_OnClick">
@@ -640,7 +640,7 @@
                                     Grid.Row="1"
                                     Grid.Column="2"
                                     Margin="0,0,8,0"
-                                    Width="92"
+                                    Width="96"
                                     Height="40"
                                     Style="{StaticResource IconPrimaryButtonStyle}"
                                     Click="AddTargetButton_OnClick">
