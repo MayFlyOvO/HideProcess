@@ -9,4 +9,5 @@ public sealed class TargetAppConfig
     public bool MuteOnHide { get; set; }
     public bool FreezeOnHide { get; set; }
     public bool TopMostOnShow { get; set; }
+    public bool CenterOnCursorOnShow { get; set; }
 }

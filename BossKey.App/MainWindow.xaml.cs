@@ -69,6 +69,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _targetMuteOnHideText = "Mute on hide";
     private string _targetFreezeOnHideText = "Freeze on hide";
     private string _targetTopMostOnShowText = "Topmost on show";
+    private string _targetCenterOnCursorOnShowText = "Center on cursor on show";
     private string _renameGroupText = "Rename group";
     private string _deleteGroupText = "Delete group";
     private string _toggleGroupText = "Collapse or expand group";
@@ -200,6 +201,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             _targetTopMostOnShowText = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TargetTopMostOnShowText)));
+        }
+    }
+
+    public string TargetCenterOnCursorOnShowText
+    {
+        get => _targetCenterOnCursorOnShowText;
+        private set
+        {
+            if (string.Equals(_targetCenterOnCursorOnShowText, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _targetCenterOnCursorOnShowText = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TargetCenterOnCursorOnShowText)));
         }
     }
 
@@ -701,7 +717,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     Enabled = target.Enabled,
                     MuteOnHide = target.MuteOnHide,
                     FreezeOnHide = target.FreezeOnHide,
-                    TopMostOnShow = target.TopMostOnShow
+                    TopMostOnShow = target.TopMostOnShow,
+                    CenterOnCursorOnShow = target.CenterOnCursorOnShow
                 })
                 .ToList();
             _settings.Groups = dialog.UpdatedSettings.Groups
@@ -722,7 +739,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                             Enabled = target.Enabled,
                             MuteOnHide = target.MuteOnHide,
                             FreezeOnHide = target.FreezeOnHide,
-                            TopMostOnShow = target.TopMostOnShow
+                            TopMostOnShow = target.TopMostOnShow,
+                            CenterOnCursorOnShow = target.CenterOnCursorOnShow
                         })
                         .ToList()
                 })
@@ -911,7 +929,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         Enabled = tile.Config.Enabled,
                         MuteOnHide = tile.Config.MuteOnHide,
                         FreezeOnHide = tile.Config.FreezeOnHide,
-                        TopMostOnShow = tile.Config.TopMostOnShow
+                        TopMostOnShow = tile.Config.TopMostOnShow,
+                        CenterOnCursorOnShow = tile.Config.CenterOnCursorOnShow
                     })
                     .ToList()
             })
@@ -926,7 +945,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Enabled = target.Enabled,
                 MuteOnHide = target.MuteOnHide,
                 FreezeOnHide = target.FreezeOnHide,
-                TopMostOnShow = target.TopMostOnShow
+                TopMostOnShow = target.TopMostOnShow,
+                CenterOnCursorOnShow = target.CenterOnCursorOnShow
             })
             .ToList();
 
@@ -1029,7 +1049,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Enabled = true,
                 MuteOnHide = false,
                 FreezeOnHide = false,
-                TopMostOnShow = false
+                TopMostOnShow = false,
+                CenterOnCursorOnShow = false
             },
             _appIconService.GetIcon(processPath)));
         defaultGroup.RefreshHotkeyText();
@@ -1063,7 +1084,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Enabled = target.Enabled,
                 MuteOnHide = target.MuteOnHide,
                 FreezeOnHide = target.FreezeOnHide,
-                TopMostOnShow = target.TopMostOnShow
+                TopMostOnShow = target.TopMostOnShow,
+                CenterOnCursorOnShow = target.CenterOnCursorOnShow
             },
             _appIconService.GetIcon(target.ProcessPath)));
         return new TargetGroupViewModel(group, tiles);
@@ -1671,6 +1693,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         PersistSettings();
     }
 
+    private void ToggleTargetCenterOnCursorMenuItem_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement element || element.DataContext is not TargetTileViewModel tile)
+        {
+            return;
+        }
+
+        if (element is System.Windows.Controls.MenuItem menuItem)
+        {
+            tile.CenterOnCursorOnShow = menuItem.IsChecked;
+        }
+
+        PersistSettings();
+    }
+
     private void RemoveTargetMenuItem_OnClick(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement element || element.DataContext is not TargetTileViewModel tile)
@@ -1779,6 +1816,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         TargetMuteOnHideText = Localizer.T("Main.TargetMuteOnHide");
         TargetFreezeOnHideText = Localizer.T("Main.TargetFreezeOnHide");
         TargetTopMostOnShowText = Localizer.T("Main.TargetTopMostOnShow");
+        TargetCenterOnCursorOnShowText = Localizer.T("Main.TargetCenterOnCursorOnShow");
         RenameGroupText = Localizer.T("Main.GroupRename");
         DeleteGroupText = Localizer.T("Main.GroupDelete");
         ToggleGroupText = Localizer.T("Main.GroupToggle");
@@ -1833,7 +1871,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         LogListBox.Visibility = _isLogCollapsed ? Visibility.Collapsed : Visibility.Visible;
         StatusTextBlock.Visibility = _isLogCollapsed ? Visibility.Visible : Visibility.Collapsed;
-        ToggleLogsGlyphTextBlock.Text = _isLogCollapsed ? "\uE70D" : "\uE70E";
+        ToggleLogsGlyphTextBlock.Text = _isLogCollapsed ? "\uE5CF" : "\uE5CE";
         ToggleLogsButtonTextBlock.Text = _isLogCollapsed
             ? Localizer.T("Main.ExpandLogs")
             : Localizer.T("Main.CollapseLogs");

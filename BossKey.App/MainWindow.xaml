@@ -26,6 +26,8 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
+        <FontFamily x:Key="MaterialIconFontFamily">pack://application:,,,/Assets/Fonts/#Material Icons Round</FontFamily>
+
         <Style x:Key="TitleBarButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="34" />
             <Setter Property="Height" Value="30" />
@@ -245,9 +247,9 @@
                                                       HorizontalAlignment="Left"
                                                       Content="{TemplateBinding SelectionBoxItem}"
                                                       ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
-                                    <TextBlock Text="&#xE70D;"
-                                               FontFamily="Segoe Fluent Icons"
-                                               FontSize="10"
+                                    <TextBlock Text="&#xE313;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
+                                               FontSize="14"
                                                Foreground="#667385"
                                                VerticalAlignment="Center"
                                                HorizontalAlignment="Right"
@@ -352,6 +354,33 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <SolidColorBrush x:Key="StatusBadgeIconBrush" Color="#475569" />
+
+        <Style x:Key="StatusBadgeIconStyle" TargetType="TextBlock">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="LineHeight" Value="14" />
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+            <Setter Property="Margin" Value="0,1,0,-1" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="{StaticResource MaterialIconFontFamily}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource StatusBadgeIconBrush}" />
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+            <Setter Property="TextOptions.TextRenderingMode" Value="Auto" />
+        </Style>
+
+        <Style x:Key="StatusBadgeIconSpacedStyle" TargetType="TextBlock" BasedOn="{StaticResource StatusBadgeIconStyle}">
+            <Setter Property="Margin" Value="2,0,0,0" />
+        </Style>
+
+        <Style x:Key="StatusBadgeMuteIconStyle" TargetType="TextBlock" BasedOn="{StaticResource StatusBadgeIconStyle}">
+            <Setter Property="Margin" Value="0,0,0,0" />
         </Style>
 
         <Style x:Key="SwitchMenuItemStyle" TargetType="MenuItem">
@@ -625,8 +654,8 @@
                                     Style="{StaticResource IconNeutralButtonStyle}"
                                     Click="RefreshTargetsButton_OnClick">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE72C;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE5D5;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="13"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="RefreshButtonTextBlock"
@@ -645,8 +674,8 @@
                                     Style="{StaticResource IconPrimaryButtonStyle}"
                                     Click="AddTargetButton_OnClick">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE710;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE145;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="13"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="AddTargetButtonTextBlock"
@@ -664,8 +693,8 @@
                                     Style="{StaticResource IconNeutralButtonStyle}"
                                     Click="PickWindowButton_OnClick">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE7C3;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE30C;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="13"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="PickWindowButtonTextBlock"
@@ -721,8 +750,8 @@
                                     Style="{StaticResource IconNeutralButtonStyle}"
                                     Click="NewGroupButton_OnClick">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE710;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE2CC;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="12"
                                                VerticalAlignment="Center" />
                                     <TextBlock Margin="6,0,0,0"
@@ -791,6 +820,10 @@
                                                                               IsChecked="{Binding TopMostOnShow, Mode=TwoWay}"
                                                                               Header="{Binding PlacementTarget.Tag.TargetTopMostOnShowText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                               Click="ToggleTargetTopMostMenuItem_OnClick" />
+                                                                    <MenuItem Style="{StaticResource SwitchMenuItemStyle}" IsCheckable="True"
+                                                                              IsChecked="{Binding CenterOnCursorOnShow, Mode=TwoWay}"
+                                                                              Header="{Binding PlacementTarget.Tag.TargetCenterOnCursorOnShowText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                              Click="ToggleTargetCenterOnCursorMenuItem_OnClick" />
                                                                     <Separator Style="{StaticResource TargetContextMenuSeparatorStyle}" />
                                                                     <MenuItem Style="{StaticResource ContextActionMenuItemStyle}" Header="{Binding PlacementTarget.Tag.RemoveButtonText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                               Click="RemoveTargetMenuItem_OnClick" />
@@ -837,31 +870,17 @@
                                                                                     HorizontalAlignment="Center"
                                                                                     VerticalAlignment="Center">
                                                                                 <TextBlock x:Name="UngroupedMuteGlyph"
-                                                                                           Text="&#x1F507;"
-                                                                                           FontFamily="Segoe UI Emoji"
-                                                                                           FontSize="11"
-                                                                                           Visibility="Collapsed"
-                                                                                           HorizontalAlignment="Center"
-                                                                                           VerticalAlignment="Center"
-                                                                                           TextAlignment="Center" />
+                                                                                           Style="{StaticResource StatusBadgeMuteIconStyle}"
+                                                                                           Text="&#xE04F;" />
                                                                                 <TextBlock x:Name="UngroupedFreezeGlyph"
-                                                                                          Text="&#x2744;&#xFE0F;"
-                                                                                          FontFamily="Segoe UI Emoji"
-                                                                                          FontSize="11"
-                                                                                          Visibility="Collapsed"
-                                                                                          Margin="2,0,0,0"
-                                                                                          HorizontalAlignment="Center"
-                                                                                          VerticalAlignment="Center"
-                                                                                          TextAlignment="Center" />
+                                                                                           Style="{StaticResource StatusBadgeIconSpacedStyle}"
+                                                                                           Text="&#xEB3B;" />
                                                                                 <TextBlock x:Name="UngroupedTopMostGlyph"
-                                                                                           Text="&#x1F4CC;"
-                                                                                           FontFamily="Segoe UI Emoji"
-                                                                                           FontSize="11"
-                                                                                           Visibility="Collapsed"
-                                                                                           Margin="2,0,0,0"
-                                                                                          HorizontalAlignment="Center"
-                                                                                          VerticalAlignment="Center"
-                                                                                          TextAlignment="Center" />
+                                                                                           Style="{StaticResource StatusBadgeIconSpacedStyle}"
+                                                                                           Text="&#xF10D;" />
+                                                                                <TextBlock x:Name="UngroupedCenterOnCursorGlyph"
+                                                                                           Style="{StaticResource StatusBadgeIconSpacedStyle}"
+                                                                                           Text="&#xE3B4;" />
                                                                         </StackPanel>
                                                                     </Border>
                                                                 </Grid>
@@ -897,6 +916,10 @@
                                                             <DataTrigger Binding="{Binding TopMostOnShow}" Value="True">
                                                                 <Setter TargetName="UngroupedStatusBadge" Property="Visibility" Value="Visible" />
                                                                 <Setter TargetName="UngroupedTopMostGlyph" Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding CenterOnCursorOnShow}" Value="True">
+                                                                <Setter TargetName="UngroupedStatusBadge" Property="Visibility" Value="Visible" />
+                                                                <Setter TargetName="UngroupedCenterOnCursorGlyph" Property="Visibility" Value="Visible" />
                                                             </DataTrigger>
                                                         </DataTemplate.Triggers>
                                                     </DataTemplate>
@@ -951,8 +974,8 @@
                                                             MouseLeftButtonDown="GroupFolderBorder_OnMouseLeftButtonDown"
                                                             DragOver="GroupDropTarget_DragOver"
                                                             Drop="GroupDropTarget_Drop">
-                                                        <TextBlock Text="&#xE8B7;"
-                                                                   FontFamily="Segoe Fluent Icons"
+                                                        <TextBlock Text="&#xE2C7;"
+                                                                   FontFamily="{StaticResource MaterialIconFontFamily}"
                                                                    FontSize="16"
                                                                    Foreground="#4B6B8A"
                                                                    VerticalAlignment="Center"
@@ -1013,8 +1036,8 @@
                                                                 Style="{StaticResource GroupActionButtonStyle}"
                                                                 ToolTip="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RenameGroupText}"
                                                                 Click="RenameGroupButton_OnClick">
-                                                            <TextBlock Text="&#xE70F;"
-                                                                       FontFamily="Segoe Fluent Icons"
+                                                            <TextBlock Text="&#xE3C9;"
+                                                                       FontFamily="{StaticResource MaterialIconFontFamily}"
                                                                        FontSize="12"
                                                                        VerticalAlignment="Center"
                                                                        HorizontalAlignment="Center" />
@@ -1026,8 +1049,8 @@
                                                                 Style="{StaticResource GroupActionButtonStyle}"
                                                                 ToolTip="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteGroupText}"
                                                                 Click="DeleteGroupButton_OnClick">
-                                                            <TextBlock Text="&#xE74D;"
-                                                                       FontFamily="Segoe Fluent Icons"
+                                                            <TextBlock Text="&#xE872;"
+                                                                       FontFamily="{StaticResource MaterialIconFontFamily}"
                                                                        FontSize="12"
                                                                        VerticalAlignment="Center"
                                                                        HorizontalAlignment="Center" />
@@ -1038,8 +1061,8 @@
                                                                 ToolTip="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ToggleGroupText}"
                                                                 Click="ToggleGroupCollapseButton_OnClick">
                                                             <TextBlock x:Name="ToggleGroupGlyph"
-                                                                       Text="&#xE70E;"
-                                                                       FontFamily="Segoe Fluent Icons"
+                                                                       Text="&#xE5CE;"
+                                                                       FontFamily="{StaticResource MaterialIconFontFamily}"
                                                                        FontSize="12"
                                                                        VerticalAlignment="Center"
                                                                        HorizontalAlignment="Center" />
@@ -1107,6 +1130,10 @@
                                                                                                   IsChecked="{Binding TopMostOnShow, Mode=TwoWay}"
                                                                                                   Header="{Binding PlacementTarget.Tag.TargetTopMostOnShowText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                                                   Click="ToggleTargetTopMostMenuItem_OnClick" />
+                                                                                        <MenuItem Style="{StaticResource SwitchMenuItemStyle}" IsCheckable="True"
+                                                                                                  IsChecked="{Binding CenterOnCursorOnShow, Mode=TwoWay}"
+                                                                                                  Header="{Binding PlacementTarget.Tag.TargetCenterOnCursorOnShowText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                                                  Click="ToggleTargetCenterOnCursorMenuItem_OnClick" />
                                                                                         <Separator Style="{StaticResource TargetContextMenuSeparatorStyle}" />
                                                                                         <MenuItem Style="{StaticResource ContextActionMenuItemStyle}" Header="{Binding PlacementTarget.Tag.RemoveButtonText, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                                                                   Click="RemoveTargetMenuItem_OnClick" />
@@ -1153,31 +1180,17 @@
                                                                                                         HorizontalAlignment="Center"
                                                                                                         VerticalAlignment="Center">
                                                                                                 <TextBlock x:Name="MuteGlyph"
-                                                                                                           Text="&#x1F507;"
-                                                                                                           FontFamily="Segoe UI Emoji"
-                                                                                                           FontSize="11"
-                                                                                                           Visibility="Collapsed"
-                                                                                                           HorizontalAlignment="Center"
-                                                                                                           VerticalAlignment="Center"
-                                                                                                           TextAlignment="Center" />
+                                                                                                           Style="{StaticResource StatusBadgeMuteIconStyle}"
+                                                                                                           Text="&#xE04F;" />
                                                                                                 <TextBlock x:Name="FreezeGlyph"
-                                                                                                           Text="&#x2744;&#xFE0F;"
-                                                                                                           FontFamily="Segoe UI Emoji"
-                                                                                                           FontSize="11"
-                                                                                                           Visibility="Collapsed"
-                                                                                                           Margin="2,0,0,0"
-                                                                                                           HorizontalAlignment="Center"
-                                                                                                           VerticalAlignment="Center"
-                                                                                                           TextAlignment="Center" />
+                                                                                                           Style="{StaticResource StatusBadgeIconSpacedStyle}"
+                                                                                                           Text="&#xEB3B;" />
                                                                                                 <TextBlock x:Name="TopMostGlyph"
-                                                                                                           Text="&#x1F4CC;"
-                                                                                                           FontFamily="Segoe UI Emoji"
-                                                                                                           FontSize="11"
-                                                                                                           Visibility="Collapsed"
-                                                                                                           Margin="2,0,0,0"
-                                                                                                           HorizontalAlignment="Center"
-                                                                                                           VerticalAlignment="Center"
-                                                                                                           TextAlignment="Center" />
+                                                                                                           Style="{StaticResource StatusBadgeIconSpacedStyle}"
+                                                                                                           Text="&#xF10D;" />
+                                                                                                <TextBlock x:Name="CenterOnCursorGlyph"
+                                                                                                           Style="{StaticResource StatusBadgeIconSpacedStyle}"
+                                                                                                           Text="&#xE3B4;" />
                                                                                             </StackPanel>
                                                                                         </Border>
                                                                                     </Grid>
@@ -1214,6 +1227,10 @@
                                                                                     <Setter TargetName="StatusBadge" Property="Visibility" Value="Visible" />
                                                                                     <Setter TargetName="TopMostGlyph" Property="Visibility" Value="Visible" />
                                                                                 </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding CenterOnCursorOnShow}" Value="True">
+                                                                                    <Setter TargetName="StatusBadge" Property="Visibility" Value="Visible" />
+                                                                                    <Setter TargetName="CenterOnCursorGlyph" Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
                                                                             </DataTemplate.Triggers>
                                                                         </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
@@ -1229,7 +1246,7 @@
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsCollapsed}" Value="True">
                                                     <Setter TargetName="GroupBodyBorder" Property="Visibility" Value="Collapsed" />
-                                                    <Setter TargetName="ToggleGroupGlyph" Property="Text" Value="&#xE70D;" />
+                                                    <Setter TargetName="ToggleGroupGlyph" Property="Text" Value="&#xE5CF;" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsDefaultGroup}" Value="True">
                                                     <Setter TargetName="DeleteGroupButton" Property="Visibility" Value="Collapsed" />
@@ -1260,8 +1277,8 @@
                                 Foreground="White"
                                 Click="HideNowButton_OnClick">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8A7;"
-                                           FontFamily="Segoe Fluent Icons"
+                                <TextBlock Text="&#xE8F5;"
+                                           FontFamily="{StaticResource MaterialIconFontFamily}"
                                            FontSize="13"
                                            VerticalAlignment="Center" />
                                 <TextBlock x:Name="HideNowButtonTextBlock"
@@ -1280,8 +1297,8 @@
                                 Foreground="White"
                                 Click="ShowNowButton_OnClick">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE890;"
-                                           FontFamily="Segoe Fluent Icons"
+                                <TextBlock Text="&#xE8F4;"
+                                           FontFamily="{StaticResource MaterialIconFontFamily}"
                                            FontSize="13"
                                            VerticalAlignment="Center" />
                                 <TextBlock x:Name="ShowNowButtonTextBlock"
@@ -1296,8 +1313,8 @@
                                 Style="{StaticResource IconNeutralButtonStyle}"
                                 Click="OpenSettingsButton_OnClick">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE713;"
-                                           FontFamily="Segoe Fluent Icons"
+                                <TextBlock Text="&#xE8B8;"
+                                           FontFamily="{StaticResource MaterialIconFontFamily}"
                                            FontSize="13"
                                            VerticalAlignment="Center" />
                                 <TextBlock x:Name="OpenSettingsButtonTextBlock"
@@ -1352,8 +1369,8 @@
                                     Click="ToggleLogsButton_OnClick">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                     <TextBlock x:Name="ToggleLogsGlyphTextBlock"
-                                               Text="&#xE70E;"
-                                               FontFamily="Segoe Fluent Icons"
+                                               Text="&#xE5CE;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="11"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="ToggleLogsButtonTextBlock"
@@ -1368,8 +1385,8 @@
                                     Style="{StaticResource IconNeutralButtonStyle}"
                                     Click="ClearLogsButton_OnClick">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="&#xE74D;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE92B;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="11"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="ClearLogsButtonTextBlock"

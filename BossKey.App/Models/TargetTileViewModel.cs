@@ -82,6 +82,21 @@ public sealed class TargetTileViewModel : INotifyPropertyChanged
         }
     }
 
+    public bool CenterOnCursorOnShow
+    {
+        get => _config.CenterOnCursorOnShow;
+        set
+        {
+            if (_config.CenterOnCursorOnShow == value)
+            {
+                return;
+            }
+
+            _config.CenterOnCursorOnShow = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CenterOnCursorOnShow)));
+        }
+    }
+
     public ImageSource IconSource
     {
         get => _iconSource;

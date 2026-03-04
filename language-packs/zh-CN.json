@@ -1,7 +1,7 @@
 {
     "code": "zh-CN",
     "displayName": "简体中文",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "translations": {
         "Main.WindowTitle": "BossKey 老板键",
         "Main.Title": "BossKey",
@@ -56,6 +56,7 @@
         "Main.TargetMuteOnHide": "隐藏时静音",
         "Main.TargetFreezeOnHide": "隐藏时冻结",
         "Main.TargetTopMostOnShow": "显示时置顶",
+        "Main.TargetCenterOnCursorOnShow": "显示时移动到鼠标中心",
         "Main.GroupRename": "重命名分组",
         "Main.GroupDelete": "删除分组",
         "Main.GroupToggle": "折叠或展开分组",
@@ -111,6 +112,7 @@
         "About.PackageSingleFile": "单文件版",
         "About.Author": "作者",
         "About.Github": "GitHub",
+        "About.ThirdParty": "第三方资源",
         "Hotkey.Title": "热键捕获",
         "Hotkey.TitleHide": "设置隐藏热键",
         "Hotkey.TitleShow": "设置显示热键",

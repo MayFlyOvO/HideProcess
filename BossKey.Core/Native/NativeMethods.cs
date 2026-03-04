@@ -31,6 +31,7 @@ internal static class NativeMethods
     public const int SwRestore = 9;
     public const uint SwpNoSize = 0x0001;
     public const uint SwpNoMove = 0x0002;
+    public const uint SwpNoZOrder = 0x0004;
     public const uint SwpShowWindow = 0x0040;
     public const uint GaRoot = 2;
     public const int GwlExStyle = -20;
@@ -156,6 +157,10 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     public static extern IntPtr WindowFromPoint(Point point);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetCursorPos(out Point lpPoint);
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetAncestor(IntPtr hWnd, uint gaFlags);

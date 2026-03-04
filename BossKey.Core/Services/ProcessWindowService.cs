@@ -137,6 +137,9 @@ public sealed class ProcessWindowService
         var topMostTargetIds = bringToFront
             ? BuildTopMostTargetIdSet(configuredTargets)
             : null;
+        var centerOnCursorTargetIds = bringToFront
+            ? BuildCenterOnCursorTargetIdSet(configuredTargets)
+            : null;
 
         var hiddenWindows = _hiddenWindows.Values
             .Where(hiddenWindow => groupId is null || string.Equals(hiddenWindow.GroupId, groupId, StringComparison.Ordinal))
@@ -171,6 +174,11 @@ public sealed class ProcessWindowService
             };
             NativeMethods.ShowWindow(handle, command);
             restoredCount++;
+
+            if (centerOnCursorTargetIds is not null && centerOnCursorTargetIds.Contains(hiddenWindow.TargetId))
+            {
+                CenterWindowOnCursor(handle);
+            }
 
             if (bringToFront
                 && topMostTargetIds is not null
@@ -233,6 +241,9 @@ public sealed class ProcessWindowService
         var topMostTargetIds = bringToFront
             ? BuildTopMostTargetIdSet(targetList)
             : null;
+        var centerOnCursorTargetIds = bringToFront
+            ? BuildCenterOnCursorTargetIdSet(targetList)
+            : null;
         foreach (var hiddenWindow in hiddenWindows)
         {
             _hiddenWindows.Remove(hiddenWindow.Handle);
@@ -254,6 +265,11 @@ public sealed class ProcessWindowService
             };
             NativeMethods.ShowWindow(handle, command);
             restoredCount++;
+
+            if (centerOnCursorTargetIds is not null && centerOnCursorTargetIds.Contains(hiddenWindow.TargetId))
+            {
+                CenterWindowOnCursor(handle);
+            }
 
             if (bringToFront
                 && topMostTargetIds is not null
@@ -466,6 +482,42 @@ public sealed class ProcessWindowService
             .Select(static target => target.Id)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         return targetIds.Count > 0 ? targetIds : null;
+    }
+
+    private static HashSet<string>? BuildCenterOnCursorTargetIdSet(IEnumerable<TargetAppConfig>? targets)
+    {
+        if (targets is null)
+        {
+            return null;
+        }
+
+        var targetIds = targets
+            .Where(static target => target.CenterOnCursorOnShow && !string.IsNullOrWhiteSpace(target.Id))
+            .Select(static target => target.Id)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return targetIds.Count > 0 ? targetIds : null;
+    }
+
+    private static void CenterWindowOnCursor(IntPtr handle)
+    {
+        if (!NativeMethods.GetCursorPos(out var cursorPosition)
+            || !NativeMethods.GetWindowRect(handle, out var windowRect)
+            || NativeMethods.IsZoomed(handle))
+        {
+            return;
+        }
+
+        var width = windowRect.Right - windowRect.Left;
+        var height = windowRect.Bottom - windowRect.Top;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        var x = cursorPosition.X - (width / 2);
+        var y = cursorPosition.Y - (height / 2);
+        const uint flags = NativeMethods.SwpNoSize | NativeMethods.SwpNoZOrder | NativeMethods.SwpShowWindow;
+        NativeMethods.SetWindowPos(handle, IntPtr.Zero, x, y, 0, 0, flags);
     }
 
     private void SetManagedTopMost(IntPtr handle)

@@ -11,6 +11,8 @@ public partial class AboutWindow : Window
 {
     private const string AuthorName = "MayFlyOvO";
     private const string GithubUrl = "https://github.com/MayFlyOvO/BossKey";
+    private const string MaterialDesignIconsUrl = "https://github.com/google/material-design-icons";
+    private const string MaterialDesignIconsDisplay = "Material Icons Round (Apache 2.0)";
 
     private readonly string _languageCode;
 
@@ -54,8 +56,11 @@ public partial class AboutWindow : Window
         PackageLabelTextBlock.Text = Localizer.T("About.PackageType", _languageCode);
         AuthorLabelTextBlock.Text = Localizer.T("About.Author", _languageCode);
         GithubLabelTextBlock.Text = Localizer.T("About.Github", _languageCode);
+        ThirdPartyLabelTextBlock.Text = Localizer.T("About.ThirdParty", _languageCode);
         GithubLink.NavigateUri = new Uri(GithubUrl, UriKind.Absolute);
         GithubLinkRun.Text = GithubUrl;
+        ThirdPartyLink.NavigateUri = new Uri(MaterialDesignIconsUrl, UriKind.Absolute);
+        ThirdPartyLinkRun.Text = MaterialDesignIconsDisplay;
     }
 
     private void LoadBuildInfo()

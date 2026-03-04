@@ -1,7 +1,7 @@
 {
     "code": "ja-JP",
     "displayName": "日本語",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "translations": {
         "Main.WindowTitle": "BossKey ボスキー",
         "Main.Title": "BossKey",
@@ -56,6 +56,7 @@
         "Main.TargetMuteOnHide": "非表示時にミュート",
         "Main.TargetFreezeOnHide": "非表示時にフリーズ",
         "Main.TargetTopMostOnShow": "表示時に最前面",
+        "Main.TargetCenterOnCursorOnShow": "表示時にカーソル中央へ移動",
         "Main.GroupRename": "グループ名を変更",
         "Main.GroupDelete": "グループを削除",
         "Main.GroupToggle": "グループを折りたたむ / 展開",
@@ -111,6 +112,7 @@
         "About.PackageSingleFile": "単一ファイル版",
         "About.Author": "作者",
         "About.Github": "GitHub",
+        "About.ThirdParty": "サードパーティ",
         "Hotkey.Title": "ホットキー入力",
         "Hotkey.TitleHide": "非表示ホットキーを設定",
         "Hotkey.TitleShow": "表示ホットキーを設定",

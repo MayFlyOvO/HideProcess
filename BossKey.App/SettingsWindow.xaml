@@ -23,6 +23,8 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
+        <FontFamily x:Key="MaterialIconFontFamily">pack://application:,,,/Assets/Fonts/#Material Icons Round</FontFamily>
+
         <Style x:Key="TitleBarButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="34" />
             <Setter Property="Height" Value="30" />
@@ -259,9 +261,9 @@
                                                       HorizontalAlignment="Left"
                                                       Content="{TemplateBinding SelectionBoxItem}"
                                                       ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
-                                    <TextBlock Text="&#xE70D;"
-                                               FontFamily="Segoe Fluent Icons"
-                                               FontSize="10"
+                                    <TextBlock Text="&#xE313;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
+                                               FontSize="14"
                                                Foreground="#667385"
                                                VerticalAlignment="Center"
                                                HorizontalAlignment="Right"
@@ -321,8 +323,8 @@
                         BorderThickness="1"
                         BorderBrush="{Binding IconColor}"
                         VerticalAlignment="Center">
-                    <TextBlock Text="&#xE8B7;"
-                               FontFamily="Segoe Fluent Icons"
+                    <TextBlock Text="&#xE2C7;"
+                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                FontSize="11"
                                Foreground="#4B6B8A"
                                VerticalAlignment="Center"
@@ -381,8 +383,8 @@
                                 Style="{StaticResource TitleBarButtonStyle}"
                                 Margin="0,0,6,0"
                                 Click="AboutButton_OnClick">
-                            <TextBlock Text="&#xE946;"
-                                       FontFamily="Segoe Fluent Icons"
+                            <TextBlock Text="&#xE88E;"
+                                       FontFamily="{StaticResource MaterialIconFontFamily}"
                                        FontSize="10" />
                         </Button>
                         <Button Style="{StaticResource TitleBarButtonStyle}"
@@ -452,8 +454,8 @@
                                     Style="{StaticResource NeutralButtonStyle}"
                                     Click="SetHideHotkeyButton_OnClick">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="&#xE70F;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE3C9;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="12"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="SetHideHotkeyButtonTextBlock"
@@ -489,8 +491,8 @@
                                     Style="{StaticResource NeutralButtonStyle}"
                                     Click="SetShowHotkeyButton_OnClick">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="&#xE70F;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE3C9;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="12"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="SetShowHotkeyButtonTextBlock"
@@ -581,8 +583,8 @@
                                     Style="{StaticResource NeutralButtonStyle}"
                                     Click="SetGroupHideHotkeyButton_OnClick">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="&#xE70F;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE3C9;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="12"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="SetGroupHideHotkeyButtonTextBlock"
@@ -618,8 +620,8 @@
                                     Style="{StaticResource NeutralButtonStyle}"
                                     Click="SetGroupShowHotkeyButton_OnClick">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="&#xE70F;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE3C9;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="12"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="SetGroupShowHotkeyButtonTextBlock"
@@ -742,8 +744,8 @@
                                     Style="{StaticResource NeutralButtonStyle}"
                                     Click="SyncLanguagesButton_OnClick">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="&#xE72C;"
-                                               FontFamily="Segoe Fluent Icons"
+                                    <TextBlock Text="&#xE5D5;"
+                                               FontFamily="{StaticResource MaterialIconFontFamily}"
                                                FontSize="12"
                                                VerticalAlignment="Center" />
                                     <TextBlock x:Name="SyncLanguagesButtonTextBlock"
@@ -772,8 +774,8 @@
                                 Style="{StaticResource NeutralButtonStyle}"
                                 Click="ImportButton_OnClick">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE898;"
-                                           FontFamily="Segoe Fluent Icons"
+                                <TextBlock Text="&#xE2C6;"
+                                           FontFamily="{StaticResource MaterialIconFontFamily}"
                                            FontSize="12"
                                            VerticalAlignment="Center" />
                                 <TextBlock x:Name="ImportButtonTextBlock"
@@ -788,8 +790,8 @@
                                 Style="{StaticResource NeutralButtonStyle}"
                                 Click="ExportButton_OnClick">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE896;"
-                                           FontFamily="Segoe Fluent Icons"
+                                <TextBlock Text="&#xE2C4;"
+                                           FontFamily="{StaticResource MaterialIconFontFamily}"
                                            FontSize="12"
                                            VerticalAlignment="Center" />
                                 <TextBlock x:Name="ExportButtonTextBlock"
@@ -810,8 +812,8 @@
                                 Style="{StaticResource NeutralButtonStyle}"
                                 Click="CancelButton_OnClick">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE711;"
-                                           FontFamily="Segoe Fluent Icons"
+                                <TextBlock Text="&#xE5CD;"
+                                           FontFamily="{StaticResource MaterialIconFontFamily}"
                                            FontSize="12"
                                            VerticalAlignment="Center" />
                                 <TextBlock x:Name="CancelButtonTextBlock"
@@ -826,8 +828,8 @@
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Click="SaveButton_OnClick">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE74E;"
-                                           FontFamily="Segoe Fluent Icons"
+                                <TextBlock Text="&#xE161;"
+                                           FontFamily="{StaticResource MaterialIconFontFamily}"
                                            FontSize="12"
                                            VerticalAlignment="Center" />
                                 <TextBlock x:Name="SaveButtonTextBlock"

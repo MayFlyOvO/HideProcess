@@ -118,7 +118,8 @@ public sealed class JsonSettingsStore
                         Enabled = target.Enabled,
                         MuteOnHide = target.MuteOnHide,
                         FreezeOnHide = target.FreezeOnHide,
-                        TopMostOnShow = target.TopMostOnShow
+                        TopMostOnShow = target.TopMostOnShow,
+                        CenterOnCursorOnShow = target.CenterOnCursorOnShow
                     })
                     .ToList()
             });
@@ -153,7 +154,8 @@ public sealed class JsonSettingsStore
                 Enabled = target.Enabled,
                 MuteOnHide = target.MuteOnHide,
                 FreezeOnHide = target.FreezeOnHide,
-                TopMostOnShow = target.TopMostOnShow
+                TopMostOnShow = target.TopMostOnShow,
+                CenterOnCursorOnShow = target.CenterOnCursorOnShow
             })
             .ToList();
 

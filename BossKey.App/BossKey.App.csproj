@@ -8,9 +8,11 @@
 
   <ItemGroup>
     <Resource Include="Assets\BossKey.ico" />
+    <Resource Include="Assets\Fonts\MaterialIconsRound-Regular.otf" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Assets\Fonts\MaterialSymbolsRounded.LICENSE" />
     <None Remove="Localization\Resources\*.json" />
     <EmbeddedResource Include="Localization\Resources\*.json" />
   </ItemGroup>
