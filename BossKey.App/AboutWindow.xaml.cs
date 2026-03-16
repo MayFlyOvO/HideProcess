@@ -120,10 +120,10 @@ public partial class AboutWindow : Window
         }
 
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        if (!string.IsNullOrWhiteSpace(informationalVersion))
+        if (informationalVersion is not null && informationalVersion.Trim().Length > 0)
         {
             var plusIndex = informationalVersion.IndexOf('+');
-            return plusIndex > 0 ? informationalVersion[..plusIndex] : informationalVersion;
+            return plusIndex > 0 ? informationalVersion.Substring(0, plusIndex) : informationalVersion;
         }
 
         var version = assembly.GetName().Version;

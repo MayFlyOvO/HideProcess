@@ -1,9 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net481</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Compat\CompilerFeaturePolyfills.cs" Link="Compatibility\CompilerFeaturePolyfills.cs" />
+  </ItemGroup>
 
 </Project>

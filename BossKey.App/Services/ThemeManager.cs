@@ -129,8 +129,8 @@ public static class ThemeManager
     private static Color ParseColor(string value)
     {
         var normalized = ThemePalette.NormalizeColor(value, "#FFFFFFFF");
-        var hex = normalized[1..];
-        var a = Convert.ToByte(hex[..2], 16);
+        var hex = normalized.Substring(1);
+        var a = Convert.ToByte(hex.Substring(0, 2), 16);
         var r = Convert.ToByte(hex.Substring(2, 2), 16);
         var g = Convert.ToByte(hex.Substring(4, 2), 16);
         var b = Convert.ToByte(hex.Substring(6, 2), 16);
@@ -139,7 +139,7 @@ public static class ThemeManager
 
     private static Color Mix(Color baseColor, Color overlayColor, double amount)
     {
-        amount = Math.Clamp(amount, 0d, 1d);
+        amount = Math.Max(0d, Math.Min(1d, amount));
         return Color.FromArgb(
             (byte)Math.Round(baseColor.A + ((overlayColor.A - baseColor.A) * amount)),
             (byte)Math.Round(baseColor.R + ((overlayColor.R - baseColor.R) * amount)),

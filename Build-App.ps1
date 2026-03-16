@@ -28,6 +28,20 @@ function Get-ReleaseVersion {
     return $value.Trim()
 }
 
+function Get-TargetFramework {
+    param(
+        [string]$ProjectPath
+    )
+
+    [xml]$xml = Get-Content -Path $ProjectPath -Raw
+    $targetFramework = $xml.Project.PropertyGroup.TargetFramework | Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace($targetFramework)) {
+        throw "TargetFramework was not found in $ProjectPath"
+    }
+
+    return $targetFramework.Trim()
+}
+
 if ([string]::IsNullOrWhiteSpace($Version)) {
     $Version = Get-ReleaseVersion -Path $versionPropsPath
 }
@@ -48,6 +62,7 @@ if ($isReleaseBuild) {
     $buildOut = Join-Path $outRoot "build"
     $publishOut = Join-Path $outRoot "publish"
     $singleOut = Join-Path $outRoot "singlefile"
+    $singleFrameworkDependentOut = Join-Path $outRoot "singlefile-fd"
     $installerOut = Join-Path $outRoot "installer"
     $outputBaseName = "BossKey-Setup"
 }
@@ -56,6 +71,7 @@ else {
     $buildOut = Join-Path $outRoot "build"
     $publishOut = Join-Path $outRoot "publish"
     $singleOut = Join-Path $outRoot "singlefile"
+    $singleFrameworkDependentOut = Join-Path $outRoot "singlefile-fd"
     $installerOut = Join-Path $outRoot "installer"
     $outputBaseName = "BossKey-Setup-$Version"
 }
@@ -64,7 +80,12 @@ if (-not (Test-Path $appProject)) {
     throw "Project file not found: $appProject"
 }
 
+$targetFramework = Get-TargetFramework -ProjectPath $appProject
+$isNetFrameworkTarget = $targetFramework -like "net4*"
+$publishSelfContained = if ($isNetFrameworkTarget) { "false" } else { "true" }
+
 Write-Host "[INFO] Version: $Version"
+Write-Host "[INFO] TargetFramework: $targetFramework"
 Write-Host "[INFO] Stopping running app to avoid file locks..."
 Get-Process BossKey.App -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
@@ -72,6 +93,7 @@ Write-Host "[INFO] Cleaning output..."
 if (Test-Path $buildOut) { Remove-Item $buildOut -Recurse -Force }
 if (Test-Path $publishOut) { Remove-Item $publishOut -Recurse -Force }
 if (Test-Path $singleOut) { Remove-Item $singleOut -Recurse -Force }
+if (Test-Path $singleFrameworkDependentOut) { Remove-Item $singleFrameworkDependentOut -Recurse -Force }
 if (Test-Path $installerOut) { Remove-Item $installerOut -Recurse -Force }
 
 function Invoke-Step {
@@ -94,51 +116,103 @@ $versionArgs = @(
     "-p:AssemblyVersion=$fileVersion",
     "-p:InformationalVersion=$Version"
 )
-
-Invoke-Step "[1/6] Restore..." @(
-    "dotnet", "restore", $appProject
+$buildFlags = @(
+    "-p:NuGetAudit=false"
 )
+
+Invoke-Step "[1/7] Restore..." (@(
+    "dotnet", "restore", $appProject
+) + $buildFlags)
 
 $buildCommand = @(
     "dotnet", "build", $appProject,
     "-c", $config,
     "-o", $buildOut
-) + $versionArgs
-Invoke-Step "[2/6] Build $Version..." $buildCommand
+) + $versionArgs + $buildFlags
+Invoke-Step "[2/7] Build $Version..." $buildCommand
 
 $publishMultiFileCommand = @(
     "dotnet", "publish", $appProject,
     "-c", $config,
     "-r", $rid,
-    "--self-contained", "true",
+    "--self-contained", $publishSelfContained,
     "-p:PublishSingleFile=false",
     "-p:UpdateChannel=installer",
     "-p:DebugType=None",
     "-p:DebugSymbols=false",
     "-o", $publishOut
-) + $versionArgs
-Invoke-Step "[3/6] Publish Multi-File (self-contained, $rid)..." $publishMultiFileCommand
-
-$publishSingleFileCommand = @(
-    "dotnet", "publish", $appProject,
-    "-c", $config,
-    "-r", $rid,
-    "--self-contained", "true",
-    "-p:PublishSingleFile=true",
-    "-p:IncludeNativeLibrariesForSelfExtract=true",
-    "-p:UpdateChannel=singlefile",
-    "-p:DebugType=None",
-    "-p:DebugSymbols=false",
-    "-o", $singleOut
-) + $versionArgs
-Invoke-Step "[4/6] Publish Single-File (self-contained, $rid)..." $publishSingleFileCommand
-
-$singleFileExe = Join-Path $singleOut "BossKey.App.exe"
-if (Test-Path $singleFileExe) {
-    Copy-Item $singleFileExe (Join-Path $singleOut "BossKey-SingleFile.exe") -Force
+) + $versionArgs + $buildFlags
+if ($isNetFrameworkTarget) {
+    Invoke-Step "[3/7] Publish Multi-File (framework-dependent, $rid)..." $publishMultiFileCommand
+}
+else {
+    Invoke-Step "[3/7] Publish Multi-File (self-contained, $rid)..." $publishMultiFileCommand
 }
 
-Write-Host "[5/6] Build Installer (Inno Setup)..."
+$singleFileEnabled = -not $isNetFrameworkTarget
+$costuraSingleFilePrepared = $false
+if ($singleFileEnabled) {
+    $publishSingleFileCommand = @(
+        "dotnet", "publish", $appProject,
+        "-c", $config,
+        "-r", $rid,
+        "--self-contained", "true",
+        "-p:PublishSingleFile=true",
+        "-p:IncludeNativeLibrariesForSelfExtract=true",
+        "-p:UpdateChannel=singlefile",
+        "-p:DebugType=None",
+        "-p:DebugSymbols=false",
+        "-o", $singleOut
+    ) + $versionArgs + $buildFlags
+    Invoke-Step "[4/7] Publish Single-File (self-contained, $rid)..." $publishSingleFileCommand
+
+    $singleFileExe = Join-Path $singleOut "BossKey.App.exe"
+    if (Test-Path $singleFileExe) {
+        Copy-Item $singleFileExe (Join-Path $singleOut "BossKey-SingleFile.exe") -Force
+    }
+
+    $publishFrameworkDependentSingleFileCommand = @(
+        "dotnet", "publish", $appProject,
+        "-c", $config,
+        "-r", $rid,
+        "--self-contained", "false",
+        "-p:PublishSingleFile=true",
+        "-p:IncludeNativeLibrariesForSelfExtract=true",
+        "-p:UpdateChannel=singlefile",
+        "-p:DebugType=None",
+        "-p:DebugSymbols=false",
+        "-o", $singleFrameworkDependentOut
+    ) + $versionArgs + $buildFlags
+    Invoke-Step "[5/7] Publish Single-File (framework-dependent, $rid)..." $publishFrameworkDependentSingleFileCommand
+
+    $singleFrameworkDependentFileExe = Join-Path $singleFrameworkDependentOut "BossKey.App.exe"
+    if (Test-Path $singleFrameworkDependentFileExe) {
+        Copy-Item $singleFrameworkDependentFileExe (Join-Path $singleFrameworkDependentOut "BossKey-SingleFile-FD.exe") -Force
+    }
+}
+else {
+    Write-Host "[4/7] Prepare Single-File (Costura, $targetFramework)..."
+    $publishedExe = Join-Path $publishOut "BossKey.App.exe"
+    $costuraSingleFileExe = Join-Path $singleOut "BossKey-SingleFile.exe"
+    New-Item -ItemType Directory -Path $singleOut -Force | Out-Null
+    if (Test-Path $publishedExe) {
+        Copy-Item $publishedExe $costuraSingleFileExe -Force
+
+        $publishedConfig = Join-Path $publishOut "BossKey.App.exe.config"
+        if (Test-Path $publishedConfig) {
+            Copy-Item $publishedConfig (Join-Path $singleOut "BossKey-SingleFile.exe.config") -Force
+        }
+
+        $costuraSingleFilePrepared = $true
+    }
+    else {
+        Write-Warning "Published executable not found for Costura single-file output: $publishedExe"
+    }
+
+    Write-Host "[5/7] Skip Single-File (framework-dependent): handled by Costura weaving for $targetFramework."
+}
+
+Write-Host "[6/7] Build Installer (Inno Setup)..."
 if (-not (Test-Path $issScript)) {
     Write-Warning "Installer script not found: $issScript"
     Write-Warning "Skipping installer build."
@@ -173,7 +247,7 @@ else {
     }
 }
 
-Write-Host "[6/6] Done."
+Write-Host "[7/7] Done."
 Write-Host ""
 Write-Host "Version: $Version"
 Write-Host "Build output:"
@@ -182,8 +256,22 @@ Write-Host ""
 Write-Host "Multi-file publish output:"
 Write-Host "  $publishOut"
 Write-Host ""
-Write-Host "Single-file publish output:"
-Write-Host "  $(Join-Path $singleOut 'BossKey-SingleFile.exe')"
+if ($singleFileEnabled) {
+    Write-Host "Single-file publish output (self-contained):"
+    Write-Host "  $(Join-Path $singleOut 'BossKey-SingleFile.exe')"
+    Write-Host ""
+    Write-Host "Single-file publish output (framework-dependent):"
+    Write-Host "  $(Join-Path $singleFrameworkDependentOut 'BossKey-SingleFile-FD.exe')"
+}
+elseif ($costuraSingleFilePrepared) {
+    Write-Host "Single-file publish output (Costura):"
+    Write-Host "  $(Join-Path $singleOut 'BossKey-SingleFile.exe')"
+    Write-Host "  $(Join-Path $singleOut 'BossKey-SingleFile.exe.config')"
+}
+else {
+    Write-Host "Single-file publish output:"
+    Write-Host "  N/A (PublishSingleFile is only supported for netcoreapp targets)"
+}
 Write-Host ""
 Write-Host "Installer output:"
 Write-Host "  $installerOut"

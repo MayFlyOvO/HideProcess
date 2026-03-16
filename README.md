@@ -80,7 +80,8 @@ Release page:
 
 - Windows 10 / 11
 - x64
-- .NET 8 SDK to build from source
+- .NET Framework 4.8.1 Runtime (required to run release builds)
+- .NET SDK 9.0+ to build from source
 
 ## Build From Source
 
@@ -97,8 +98,8 @@ Build-Release.bat
 
 The GitHub Actions workflow builds:
 
-- a self-contained installer package
-- a self-contained single-file package
+- an installer package
+- a Costura single-file package
 
 ## Notes
 

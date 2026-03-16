@@ -201,7 +201,10 @@ public sealed class WindowPickerService(ProcessWindowService processWindowServic
 
     private void ThrowIfDisposed()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(GetType().FullName);
+        }
     }
 }
 

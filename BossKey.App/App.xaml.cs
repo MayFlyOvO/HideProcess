@@ -85,7 +85,7 @@ public partial class App : System.Windows.Application
 
     internal static bool TryRestartAsAdministrator()
     {
-        var executablePath = Environment.ProcessPath;
+        var executablePath = GetCurrentExecutablePath();
         if (string.IsNullOrWhiteSpace(executablePath))
         {
             return false;
@@ -104,6 +104,18 @@ public partial class App : System.Windows.Application
         catch
         {
             return false;
+        }
+    }
+
+    private static string? GetCurrentExecutablePath()
+    {
+        try
+        {
+            return Process.GetCurrentProcess().MainModule?.FileName;
+        }
+        catch
+        {
+            return null;
         }
     }
 

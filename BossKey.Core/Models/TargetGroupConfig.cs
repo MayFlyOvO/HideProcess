@@ -8,6 +8,8 @@ public sealed class TargetGroupConfig
     public const string DefaultGroupIconColor = "#FFB8C6D6";
     public const string StandardGroupIconColor = "#FF67B2FF";
     private static readonly Regex HexColorPattern = new("^#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$", RegexOptions.Compiled);
+    private static readonly object LightIconRandomLock = new();
+    private static readonly Random LightIconRandom = new();
     private static readonly (double HueOffset, double Saturation, double Lightness)[] LightIconProfiles =
     [
         (-24d, 0.84d, 0.74d),
@@ -34,7 +36,13 @@ public sealed class TargetGroupConfig
     {
         var normalizedBaseColor = NormalizeIconColor(baseColor, null);
         var (baseHue, baseSaturation, baseLightness) = ToHsl(ParseColor(normalizedBaseColor));
-        var profile = LightIconProfiles[Random.Shared.Next(LightIconProfiles.Length)];
+        int profileIndex;
+        lock (LightIconRandomLock)
+        {
+            profileIndex = LightIconRandom.Next(LightIconProfiles.Length);
+        }
+
+        var profile = LightIconProfiles[profileIndex];
         var hue = WrapHue(baseHue + profile.HueOffset);
         var saturation = Clamp01(Math.Max(baseSaturation, profile.Saturation));
         var lightness = Clamp01(Math.Max(baseLightness, profile.Lightness));
@@ -50,7 +58,17 @@ public sealed class TargetGroupConfig
 
     public static string NormalizeIconColor(string? iconColor, string? groupId)
     {
-        return !string.IsNullOrWhiteSpace(iconColor) && HexColorPattern.IsMatch(iconColor)
+        if (iconColor is null)
+        {
+            return GetDefaultIconColor(groupId);
+        }
+
+        if (iconColor.Trim().Length == 0)
+        {
+            return GetDefaultIconColor(groupId);
+        }
+
+        return HexColorPattern.IsMatch(iconColor)
             ? iconColor
             : GetDefaultIconColor(groupId);
     }
@@ -146,11 +164,11 @@ public sealed class TargetGroupConfig
         var hex = color.TrimStart('#');
         if (hex.Length == 8)
         {
-            hex = hex[2..];
+            hex = hex.Substring(2);
         }
 
         return (
-            Convert.ToByte(hex[..2], 16),
+            Convert.ToByte(hex.Substring(0, 2), 16),
             Convert.ToByte(hex.Substring(2, 2), 16),
             Convert.ToByte(hex.Substring(4, 2), 16));
     }

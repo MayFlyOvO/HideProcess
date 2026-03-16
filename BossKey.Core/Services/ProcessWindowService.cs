@@ -7,6 +7,7 @@ namespace BossKey.Core.Services;
 
 public sealed class ProcessWindowService
 {
+    private static readonly int CurrentProcessId = Process.GetCurrentProcess().Id;
     private readonly ProcessAudioMuteService _processAudioMuteService = new();
     private readonly Dictionary<IntPtr, HiddenWindowState> _hiddenWindows = [];
     private readonly Dictionary<int, ProcessMuteSnapshot> _mutedProcesses = [];
@@ -389,7 +390,7 @@ public sealed class ProcessWindowService
 
         NativeMethods.GetWindowThreadProcessId(handle, out var processIdRaw);
         var processId = unchecked((int)processIdRaw);
-        if (processId <= 0 || processId == Environment.ProcessId)
+        if (processId <= 0 || processId == CurrentProcessId)
         {
             return false;
         }
@@ -426,7 +427,7 @@ public sealed class ProcessWindowService
     private static string NormalizeProcessName(string processName)
     {
         return processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-            ? processName[..^4]
+            ? processName.Substring(0, processName.Length - 4)
             : processName;
     }
 
@@ -552,9 +553,9 @@ public sealed class ProcessWindowService
         }
 
         var snapshots = _processAudioMuteService.CaptureAndMuteProcesses(candidates);
-        foreach (var (processId, originalMuteState) in snapshots)
+        foreach (var snapshot in snapshots)
         {
-            _mutedProcesses[processId] = new ProcessMuteSnapshot(processId, originalMuteState, groupId, target.Id);
+            _mutedProcesses[snapshot.Key] = new ProcessMuteSnapshot(snapshot.Key, snapshot.Value, groupId, target.Id);
         }
     }
 
@@ -593,7 +594,7 @@ public sealed class ProcessWindowService
         {
             try
             {
-                if (process.Id <= 0 || process.Id == Environment.ProcessId)
+                if (process.Id <= 0 || process.Id == CurrentProcessId)
                 {
                     continue;
                 }
