@@ -65,12 +65,7 @@ public sealed class GitHubLanguagePackService
 
         var tempPath = $"{localPath}.{Guid.NewGuid():N}.tmp";
         File.WriteAllText(tempPath, packJson);
-        if (File.Exists(localPath))
-        {
-            File.Delete(localPath);
-        }
-
-        File.Move(tempPath, localPath);
+        File.Move(tempPath, localPath, overwrite: true);
         return true;
     }
 
@@ -78,7 +73,7 @@ public sealed class GitHubLanguagePackService
     {
         var manifestUrl = BuildRawUrl("manifest.json");
         var manifestJson = await DownloadStringAsync(manifestUrl, allowNotFound: true, cancellationToken).ConfigureAwait(false);
-        if (manifestJson is not null && manifestJson.Trim().Length > 0)
+        if (!string.IsNullOrWhiteSpace(manifestJson))
         {
             return DeserializeManifest(manifestJson);
         }
@@ -88,12 +83,9 @@ public sealed class GitHubLanguagePackService
 
     private async Task<string> DownloadLanguagePackJsonAsync(LanguageManifestEntry entry, CancellationToken cancellationToken)
     {
-        var downloadUrl = entry.DownloadUrl;
-        if (downloadUrl is null || downloadUrl.Trim().Length == 0)
-        {
-            downloadUrl = BuildRawUrl(entry.RelativePath);
-        }
-
+        var downloadUrl = !string.IsNullOrWhiteSpace(entry.DownloadUrl)
+            ? entry.DownloadUrl
+            : BuildRawUrl(entry.RelativePath);
         return await DownloadStringAsync(downloadUrl, allowNotFound: false, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidDataException($"Language pack '{entry.Code}' is missing.");
     }
@@ -102,7 +94,7 @@ public sealed class GitHubLanguagePackService
     {
         var directoryUrl = BuildContentsApiUrl();
         var directoryJson = await DownloadStringAsync(directoryUrl, allowNotFound: true, cancellationToken).ConfigureAwait(false);
-        if (directoryJson is null || directoryJson.Trim().Length == 0)
+        if (string.IsNullOrWhiteSpace(directoryJson))
         {
             return new LanguageManifest();
         }
@@ -161,7 +153,7 @@ public sealed class GitHubLanguagePackService
         }
 
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private string BuildRawUrl(string relativePath)

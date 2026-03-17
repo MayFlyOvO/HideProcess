@@ -1,6 +1,0 @@
-<Project>
-  <PropertyGroup>
-    <!-- Default to disabling NuGet audit to avoid NU1900 warnings in restricted network environments. -->
-    <NuGetAudit Condition="'$(NuGetAudit)' == ''">false</NuGetAudit>
-  </PropertyGroup>
-</Project>

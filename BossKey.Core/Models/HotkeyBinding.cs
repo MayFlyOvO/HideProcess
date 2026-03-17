@@ -16,7 +16,7 @@ public sealed class HotkeyBinding
                 .Select(VirtualKeyCodes.Normalize)
                 .Where(static key => key > 0)
                 .Distinct()
-                .OrderBy(static key => key)
+                .Order()
                 .ToList()
         };
     }

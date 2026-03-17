@@ -80,8 +80,7 @@ BossKey 内置了完整的主题系统，而不是简单依赖系统默认样式
 
 - Windows 10 / 11
 - x64
-- 运行正式发布版本需要 .NET Framework 4.8.1 Runtime
-- 如需从源码构建，请安装 .NET SDK 9.0 或更高版本
+- 如需从源码构建，请安装 .NET 8 SDK
 
 ## 本地运行
 
@@ -98,8 +97,8 @@ Build-Release.bat
 
 GitHub Actions 会构建：
 
-- 安装包版本
-- Costura 单文件版本
+- 自包含安装包
+- 自包含单文件版本
 
 ## 说明
 

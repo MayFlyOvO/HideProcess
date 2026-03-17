@@ -42,7 +42,7 @@ public sealed class AppUpdateService
             return UpdateCheckResult.Failed($"HTTP {(int)response.StatusCode}");
         }
 
-        using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
         return BuildResultFromRelease(currentVersion, document.RootElement, _packageType);
     }
@@ -61,7 +61,7 @@ public sealed class AppUpdateService
             return UpdateCheckResult.Failed($"HTTP {(int)response.StatusCode}");
         }
 
-        using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
         if (document.RootElement.ValueKind != JsonValueKind.Array)
         {
@@ -182,19 +182,19 @@ public sealed class AppUpdateService
         response.EnsureSuccessStatusCode();
 
         var totalBytes = response.Content.Headers.ContentLength;
-        using var source = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-        using var destination = File.Create(filePath);
+        await using var source = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var destination = File.Create(filePath);
         var buffer = new byte[81920];
         long totalRead = 0;
         int bytesRead;
         progress?.Report(0d);
-        while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false)) > 0)
+        while ((bytesRead = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
         {
-            await destination.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
+            await destination.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken).ConfigureAwait(false);
             totalRead += bytesRead;
             if (totalBytes is > 0)
             {
-                progress?.Report(Clamp01((double)totalRead / totalBytes.Value));
+                progress?.Report(Math.Clamp((double)totalRead / totalBytes.Value, 0d, 1d));
             }
         }
 
@@ -215,21 +215,21 @@ public sealed class AppUpdateService
     private static bool TryParseVersion(string? rawTag, out Version version)
     {
         version = new Version(0, 0, 0, 0);
-        if (rawTag is null || rawTag.Trim().Length == 0)
+        if (string.IsNullOrWhiteSpace(rawTag))
         {
             return false;
         }
 
         var normalized = rawTag.Trim();
-        if (normalized.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+        if (normalized.StartsWith('v') || normalized.StartsWith('V'))
         {
-            normalized = normalized.Substring(1);
+            normalized = normalized[1..];
         }
 
-        var suffixIndex = normalized.IndexOfAny(new[] { '-', '+' });
+        var suffixIndex = normalized.IndexOfAny(['-', '+']);
         if (suffixIndex >= 0)
         {
-            normalized = normalized.Substring(0, suffixIndex);
+            normalized = normalized[..suffixIndex];
         }
 
         if (Version.TryParse(normalized, out var parsed) && parsed is not null)
@@ -251,7 +251,7 @@ public sealed class AppUpdateService
             return null;
         }
 
-        var tagPart = path.Substring(index + marker.Length);
+        var tagPart = path[(index + marker.Length)..];
         if (string.IsNullOrWhiteSpace(tagPart))
         {
             return null;
@@ -283,12 +283,7 @@ public sealed class AppUpdateService
         {
             var name = GetString(asset, "name");
             var url = GetString(asset, "browser_download_url");
-            if (name is null || url is null)
-            {
-                continue;
-            }
-
-            if (name.Trim().Length == 0 || url.Trim().Length == 0)
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(url))
             {
                 continue;
             }
@@ -317,13 +312,8 @@ public sealed class AppUpdateService
 
     private static bool IsInstallerAsset(string assetName)
     {
-        return assetName.IndexOf("setup", StringComparison.OrdinalIgnoreCase) >= 0
-               || assetName.IndexOf("installer", StringComparison.OrdinalIgnoreCase) >= 0;
-    }
-
-    private static double Clamp01(double value)
-    {
-        return Math.Max(0d, Math.Min(1d, value));
+        return assetName.Contains("setup", StringComparison.OrdinalIgnoreCase)
+               || assetName.Contains("installer", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string SanitizeFileName(string input)

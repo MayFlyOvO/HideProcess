@@ -362,9 +362,9 @@ public partial class ColorPickerWindow : Window
     private static MediaColor ParseColor(string color)
     {
         var normalized = ThemePalette.NormalizeColor(color, "#FFFFFFFF");
-        var hex = normalized.Substring(1);
+        var hex = normalized[1..];
         return MediaColor.FromArgb(
-            Convert.ToByte(hex.Substring(0, 2), 16),
+            Convert.ToByte(hex[..2], 16),
             Convert.ToByte(hex.Substring(2, 2), 16),
             Convert.ToByte(hex.Substring(4, 2), 16),
             Convert.ToByte(hex.Substring(6, 2), 16));

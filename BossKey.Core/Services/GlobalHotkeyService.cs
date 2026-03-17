@@ -299,10 +299,7 @@ public sealed class GlobalHotkeyService : IDisposable
 
     private void ThrowIfDisposed()
     {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     private void ResumeSuspension()

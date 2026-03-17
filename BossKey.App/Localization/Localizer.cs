@@ -476,7 +476,7 @@ public static class Localizer
 
     private static string NormalizeStoredLanguageNoLock(string? languageCode)
     {
-        if (languageCode is null || languageCode.Trim().Length == 0)
+        if (string.IsNullOrWhiteSpace(languageCode))
         {
             return DefaultLanguage;
         }

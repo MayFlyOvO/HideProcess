@@ -977,8 +977,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             _settingsStore.Save(_settings);
 
-            var executablePath = GetCurrentExecutablePath();
-            if (executablePath is not null && executablePath.Trim().Length > 0)
+            var executablePath = Environment.ProcessPath;
+            if (!string.IsNullOrWhiteSpace(executablePath))
             {
                 _autoStartService.SetEnabled(AppName, executablePath, _settings.StartWithWindows);
             }
@@ -1626,7 +1626,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        var nextOffset = Clamp(scrollViewer.VerticalOffset + delta, 0d, scrollViewer.ScrollableHeight);
+        var nextOffset = Math.Clamp(scrollViewer.VerticalOffset + delta, 0d, scrollViewer.ScrollableHeight);
         scrollViewer.ScrollToVerticalOffset(nextOffset);
     }
 
@@ -1803,7 +1803,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            var processPath = GetCurrentExecutablePath();
+            var processPath = Environment.ProcessPath;
             if (!string.IsNullOrWhiteSpace(processPath))
             {
                 using var associatedIcon = Drawing.Icon.ExtractAssociatedIcon(processPath);
@@ -2006,9 +2006,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             SetStatus(Localizer.Format("Update.StatusAvailable", result.LatestVersion));
             var releaseNotes = result.ReleaseNotes?.Trim();
-            if (releaseNotes is not null && releaseNotes.Length > 420)
+            if (!string.IsNullOrWhiteSpace(releaseNotes) && releaseNotes.Length > 420)
             {
-                releaseNotes = $"{releaseNotes.Substring(0, 420)}...";
+                releaseNotes = $"{releaseNotes[..420]}...";
             }
 
             var message = Localizer.Format(
@@ -2032,8 +2032,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 return false;
             }
 
-            var installerDownloadUrl = result.InstallerDownloadUrl;
-            if (installerDownloadUrl is null || installerDownloadUrl.Trim().Length == 0)
+            if (string.IsNullOrWhiteSpace(result.InstallerDownloadUrl))
             {
                 if (!string.IsNullOrWhiteSpace(result.ReleasePageUrl))
                 {
@@ -2061,7 +2060,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 SetStatus(Localizer.T("Update.StatusDownloading"));
                 ShowUpdateDownloadOverlay();
                 var progress = new Progress<double>(UpdateDownloadProgress);
-                var installerPath = await _appUpdateService.DownloadInstallerAsync(installerDownloadUrl, result.ReleaseTag, progress);
+                var installerPath = await _appUpdateService.DownloadInstallerAsync(result.InstallerDownloadUrl, result.ReleaseTag, progress);
                 if (_currentPackageType == UpdatePackageType.SingleFile)
                 {
                     BeginSingleFileSelfUpdate(installerPath);
@@ -2163,7 +2162,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateDownloadProgress(double value)
     {
-        var progress = Clamp(value, 0d, 1d);
+        var progress = Math.Clamp(value, 0d, 1d);
         UpdateDownloadProgressText = $"{Math.Round(progress * 100):0}%";
         UpdateDownloadArcData = BuildProgressArcData(progress);
     }
@@ -2194,13 +2193,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static void BeginSingleFileSelfUpdate(string downloadedExecutablePath)
     {
-        var currentExecutablePath = GetCurrentExecutablePath();
-        if (currentExecutablePath is null || currentExecutablePath.Trim().Length == 0)
+        var currentExecutablePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(currentExecutablePath))
         {
             throw new InvalidOperationException("Current executable path is unavailable.");
         }
-
-        var resolvedCurrentExecutablePath = currentExecutablePath;
 
         var updatesDirectory = Path.Combine(Path.GetTempPath(), "BossKey", "Updates");
         Directory.CreateDirectory(updatesDirectory);
@@ -2211,7 +2208,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             "@echo off",
             "setlocal",
             $"set \"SOURCE={EscapeBatchValue(downloadedExecutablePath)}\"",
-            $"set \"TARGET={EscapeBatchValue(resolvedCurrentExecutablePath)}\"",
+            $"set \"TARGET={EscapeBatchValue(currentExecutablePath)}\"",
             ":replace",
             "move /Y \"%SOURCE%\" \"%TARGET%\" >nul 2>&1",
             "if errorlevel 1 (",
@@ -2235,24 +2232,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static string EscapeBatchValue(string value)
     {
-        return value.Replace("%", "%%");
-    }
-
-    private static double Clamp(double value, double min, double max)
-    {
-        return Math.Max(min, Math.Min(max, value));
-    }
-
-    private static string? GetCurrentExecutablePath()
-    {
-        try
-        {
-            return Process.GetCurrentProcess().MainModule?.FileName;
-        }
-        catch
-        {
-            return null;
-        }
+        return value.Replace("%", "%%", StringComparison.Ordinal);
     }
 
     private void SaveCurrentWindowPlacement()

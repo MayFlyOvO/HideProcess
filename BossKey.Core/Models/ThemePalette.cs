@@ -101,21 +101,15 @@ public sealed class ThemePalette
     public static bool TryNormalizeColor(string? value, out string normalized)
     {
         normalized = string.Empty;
-        if (value is null)
+        if (string.IsNullOrWhiteSpace(value))
         {
             return false;
         }
 
-        var trimmed = value.Trim();
-        if (trimmed.Length == 0)
+        var hex = value.Trim();
+        if (hex.StartsWith('#'))
         {
-            return false;
-        }
-
-        var hex = trimmed;
-        if (hex.StartsWith("#", StringComparison.Ordinal))
-        {
-            hex = hex.Substring(1);
+            hex = hex[1..];
         }
 
         if (hex.Length == 6)

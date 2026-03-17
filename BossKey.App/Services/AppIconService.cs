@@ -15,12 +15,7 @@ public sealed class AppIconService
 
     public ImageSource GetIcon(string? processPath)
     {
-        var cacheKey = processPath;
-        if (cacheKey is null || cacheKey.Trim().Length == 0)
-        {
-            cacheKey = "__default__";
-        }
-
+        var cacheKey = string.IsNullOrWhiteSpace(processPath) ? "__default__" : processPath;
         return _cache.GetOrAdd(cacheKey, _ => LoadIcon(processPath));
     }
 
