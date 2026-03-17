@@ -97,6 +97,11 @@ $versionArgs = @(
 $buildFlags = @(
     "-p:NuGetAudit=false"
 )
+$frameworkDependentPublishFlags = @(
+    "--self-contained", "false",
+    "-p:SelfContained=false",
+    "-p:PublishSelfContained=false"
+)
 
 Invoke-Step "[1/6] Restore..." (@(
     "dotnet", "restore", $appProject
@@ -112,8 +117,8 @@ Invoke-Step "[2/6] Build $Version..." $buildCommand
 $publishMultiFileCommand = @(
     "dotnet", "publish", $appProject,
     "-c", $config,
-    "-r", $rid,
-    "--self-contained", "false",
+    "-r", $rid
+) + $frameworkDependentPublishFlags + @(
     "-p:PublishSingleFile=false",
     "-p:UpdateChannel=installer",
     "-p:DebugType=None",
@@ -125,8 +130,8 @@ Invoke-Step "[3/6] Publish Multi-File (framework-dependent, $rid)..." $publishMu
 $publishSingleFileCommand = @(
     "dotnet", "publish", $appProject,
     "-c", $config,
-    "-r", $rid,
-    "--self-contained", "false",
+    "-r", $rid
+) + $frameworkDependentPublishFlags + @(
     "-p:PublishSingleFile=true",
     "-p:IncludeNativeLibrariesForSelfExtract=true",
     "-p:UpdateChannel=singlefile",
@@ -139,6 +144,17 @@ Invoke-Step "[4/6] Publish Single-File (framework-dependent, $rid)..." $publishS
 $singleFileExe = Join-Path $singleOut "BossKey.App.exe"
 if (Test-Path $singleFileExe) {
     Copy-Item $singleFileExe (Join-Path $singleOut "BossKey-SingleFile.exe") -Force
+}
+$singleFileOutput = Join-Path $singleOut "BossKey-SingleFile.exe"
+if (-not (Test-Path $singleFileOutput)) {
+    throw "Single-file output not found: $singleFileOutput"
+}
+
+$singleFileSizeMb = [Math]::Round(((Get-Item $singleFileOutput).Length / 1MB), 2)
+Write-Host "[INFO] Single-file size: $singleFileSizeMb MB"
+$maxFrameworkDependentSingleFileSizeMb = 25
+if ($singleFileSizeMb -gt $maxFrameworkDependentSingleFileSizeMb) {
+    throw ("Single-file output is {0} MB (>{1} MB). This likely indicates a self-contained publish." -f $singleFileSizeMb, $maxFrameworkDependentSingleFileSizeMb)
 }
 
 Write-Host "[5/6] Build Installer (Inno Setup)..."
